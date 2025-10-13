@@ -219,9 +219,13 @@ export function CsvImport({ onClose }: CsvImportProps) {
 Julia,Edwall,https://www.linkedin.com/in/jedwall,,Investerum,Chief Operating Officer,11 Oct 2025
 Sofia,Ilie,https://www.linkedin.com/in/sofia-ilie-76754318a,,shots,Sales Executive,11 Oct 2025`;
     } else {
-      return `First Name,Last Name,Email,Phone,Company,Position
-John,Doe,john@example.com,555-1234,Acme Corp,Manager
-Jane,Smith,jane@example.com,555-5678,Tech Inc,Developer`;
+      return `1,email,Land,Ansvar,Företag,Skickat? (448),Kommentar
+121,rasmus@relaystudio.co,Danmark,Calle,Relay Studio,,
+122,andreas@relaystudio.co,Danmark,Calle,Relay Studio,,
+123,joyce@relaystudio.co,Danmark,Calle,Relay Studio,,
+124,meredith@relaystudio.co,Danmark,Calle,Relay Studio,,
+125,maranc@google.com,England,Calle,Google CL,,
+126,russell.hall@imagination.com,England,Calle,Imagination,,`;
     }
   };
 
@@ -256,7 +260,7 @@ Jane,Smith,jane@example.com,555-5678,Tech Inc,Developer`;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">Import Contacts</h2>
         
         {/* Import Type Selector */}
@@ -290,18 +294,85 @@ Jane,Smith,jane@example.com,555-5678,Tech Inc,Developer`;
 
         {getInstructions()}
 
-        <textarea
-          value={csvData}
-          onChange={(e) => setCsvData(e.target.value)}
-          placeholder={getPlaceholderText()}
-          rows={12}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono text-sm"
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* CSV Data Input */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Paste your CSV data
+            </label>
+            <textarea
+              value={csvData}
+              onChange={(e) => handleCsvDataChange(e.target.value)}
+              placeholder={getPlaceholderText()}
+              rows={12}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-mono text-sm"
+            />
+          </div>
+
+          {/* Column Mapping */}
+          {headers.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Map CSV columns to contact fields
+              </label>
+              <div className="space-y-3">
+                {Object.entries(columnMapping).map(([field, currentMapping]) => (
+                  <div key={field} className="flex items-center gap-2">
+                    <label className="w-20 text-sm text-gray-600 capitalize">
+                      {field.replace(/([A-Z])/g, ' $1').trim()}:
+                    </label>
+                    <select
+                      value={currentMapping}
+                      onChange={(e) => setColumnMapping(prev => ({
+                        ...prev,
+                        [field]: e.target.value
+                      }))}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm"
+                    >
+                      <option value="">Select column...</option>
+                      {headers.map(header => (
+                        <option key={header} value={header}>
+                          {header}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Preview */}
+              {previewData.length > 0 && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Preview (first 5 rows)
+                  </label>
+                  <div className="bg-gray-50 rounded-md p-3 max-h-40 overflow-y-auto">
+                    <div className="text-xs font-mono">
+                      {previewData.map((row, index) => (
+                        <div key={index} className="mb-1">
+                          {Object.entries(columnMapping).map(([field, headerName]) => {
+                            if (!headerName) return null;
+                            const value = row[headerName] || '';
+                            return (
+                              <span key={field} className="mr-2">
+                                <span className="text-blue-600">{field}:</span> {value}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="flex gap-2 pt-4">
           <button
             onClick={handleImport}
-            disabled={isImporting}
+            disabled={isImporting || !columnMapping.email}
             className="flex-1 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors disabled:opacity-50"
           >
             {isImporting ? "Importing..." : `Import ${importType === "linkedin" ? "LinkedIn Connections" : "Contacts"}`}
