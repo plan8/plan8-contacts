@@ -2,9 +2,19 @@ interface PartyListProps {
   parties: any[];
   onEdit: (party: any) => void;
   onView: (party: any) => void;
+  selectedParties?: Set<string>;
+  onSelectParty?: (partyId: string, isSelected: boolean) => void;
+  onSelectAll?: (isSelected: boolean) => void;
 }
 
-export function PartyList({ parties, onEdit, onView }: PartyListProps) {
+export function PartyList({ 
+  parties, 
+  onEdit, 
+  onView, 
+  selectedParties = new Set(), 
+  onSelectParty, 
+  onSelectAll 
+}: PartyListProps) {
   if (parties.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
@@ -29,45 +39,96 @@ export function PartyList({ parties, onEdit, onView }: PartyListProps) {
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {parties.map((party) => (
-        <div key={party._id} className="bg-white rounded-lg shadow-sm border p-6">
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">{party.name}</h3>
-            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(party.status)}`}>
-              {party.status}
-            </span>
-          </div>
-          
-          {party.description && (
-            <p className="text-gray-600 text-sm mb-3 line-clamp-2">{party.description}</p>
-          )}
-          
-          <div className="space-y-2 text-sm text-gray-500 mb-4">
-            {party.date && (
-              <div>📅 {new Date(party.date).toLocaleDateString()} at {new Date(party.date).toLocaleTimeString()}</div>
-            )}
-            {party.location && (
-              <div>📍 {party.location}</div>
-            )}
-          </div>
-          
-          <div className="flex gap-2">
-            <button
-              onClick={() => onView(party)}
-              className="flex-1 px-3 py-2 text-sm bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
-            >
-              View Details
-            </button>
-            <button
-              onClick={() => onEdit(party)}
-              className="px-3 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-            >
-              Edit
-            </button>
-          </div>
-        </div>
-      ))}
+    <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {onSelectAll && (
+                  <input
+                    type="checkbox"
+                    checked={selectedParties.size === parties.length && parties.length > 0}
+                    onChange={(e) => onSelectAll(e.target.checked)}
+                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                  />
+                )}
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Party Name
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Date & Time
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Location
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {parties.map((party) => (
+              <tr key={party._id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {onSelectParty && (
+                    <input
+                      type="checkbox"
+                      checked={selectedParties.has(party._id)}
+                      onChange={(e) => onSelectParty(party._id, e.target.checked)}
+                      className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                    />
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">{party.name}</div>
+                    {party.description && (
+                      <div className="text-sm text-gray-500 line-clamp-1">{party.description}</div>
+                    )}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {party.date ? (
+                    <div>
+                      <div>{new Date(party.date).toLocaleDateString()}</div>
+                      <div className="text-gray-500">{new Date(party.date).toLocaleTimeString()}</div>
+                    </div>
+                  ) : (
+                    "-"
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {party.location || "-"}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(party.status)}`}>
+                    {party.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <button
+                    onClick={() => onView(party)}
+                    className="text-primary hover:text-primary-hover mr-3"
+                  >
+                    View
+                  </button>
+                  <button
+                    onClick={() => onEdit(party)}
+                    className="text-gray-600 hover:text-gray-900"
+                  >
+                    Edit
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

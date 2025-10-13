@@ -58,6 +58,21 @@ export const update = mutation({
   },
 });
 
+export const batchUpdateStatus = mutation({
+  args: {
+    ids: v.array(v.id("parties")),
+    status: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    // Update all parties in a single operation
+    await Promise.all(args.ids.map(id => ctx.db.patch(id, { status: args.status })));
+    return args.ids.length;
+  },
+});
+
 export const getWithInvitations = query({
   args: { partyId: v.id("parties") },
   handler: async (ctx, args) => {

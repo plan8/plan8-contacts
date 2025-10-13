@@ -6,6 +6,8 @@ import { Toaster } from "sonner";
 import { ContactManager } from "./components/ContactManager";
 import { PartyManager } from "./components/PartyManager";
 import { Navigation } from "./components/Navigation";
+import { PartyDetailsWrapper } from "./components/PartyDetailsWrapper";
+import { ContactDetailsWrapper } from "./components/ContactDetailsWrapper";
 
 export default function App() {
   return (
@@ -38,7 +40,9 @@ function Content() {
             <Routes>
               <Route path="/" element={<Navigate to="/contacts" replace />} />
               <Route path="/contacts" element={<ContactManager />} />
+              <Route path="/contacts/:contactId" element={<ContactDetailsWrapper />} />
               <Route path="/parties" element={<PartyManager />} />
+              <Route path="/parties/:partyId" element={<PartyDetailsWrapper />} />
             </Routes>
           </div>
         </main>

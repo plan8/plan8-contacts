@@ -3,6 +3,16 @@ import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { paginationOptsValidator } from "convex/server";
 
+export const get = query({
+  args: { id: v.id("contacts") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    return await ctx.db.get(args.id);
+  },
+});
+
 // Helper function to extract company from email domain
 function guessCompanyFromEmail(email: string): string | undefined {
   if (!email || !email.includes('@')) return undefined;
@@ -35,6 +45,7 @@ export const list = query({
     search: v.optional(v.string()),
     company: v.optional(v.string()),
     source: v.optional(v.string()),
+    createdBy: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -101,6 +112,14 @@ export const list = query({
       return await ctx.db
         .query("contacts")
         .withIndex("by_company", (q) => q.eq("company", args.company))
+        .order("desc")
+        .paginate(args.paginationOpts);
+    }
+
+    if (args.createdBy) {
+      return await ctx.db
+        .query("contacts")
+        .withIndex("by_created_by", (q) => q.eq("createdBy", args.createdBy!))
         .order("desc")
         .paginate(args.paginationOpts);
     }
@@ -179,6 +198,18 @@ export const remove = mutation({
     if (!contact) throw new Error("Contact not found");
 
     await ctx.db.delete(args.id);
+  },
+});
+
+export const batchDelete = mutation({
+  args: { ids: v.array(v.id("contacts")) },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    // Delete all contacts in a single operation
+    await Promise.all(args.ids.map(id => ctx.db.delete(id)));
+    return args.ids.length;
   },
 });
 
@@ -283,6 +314,26 @@ export const getSources = query({
     const contacts = await ctx.db.query("contacts").collect();
     const sources = [...new Set(contacts.map(c => c.source))];
     return sources.sort();
+  },
+});
+
+export const getCreatedByUsers = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const contacts = await ctx.db.query("contacts").collect();
+    const createdByIds = [...new Set(contacts.map(c => c.createdBy))];
+    
+    const users = await Promise.all(
+      createdByIds.map(async (id) => {
+        const user = await ctx.db.get(id);
+        return user ? { id, name: user.name || user.email || `User ${id}` } : null;
+      })
+    );
+    
+    return users.filter(Boolean).sort((a, b) => a!.name.localeCompare(b!.name));
   },
 });
 

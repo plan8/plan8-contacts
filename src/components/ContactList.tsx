@@ -2,11 +2,25 @@ interface ContactListProps {
   contacts: any[];
   onEdit: (contact: any) => void;
   onDelete: (id: string) => void;
+  onView?: (contact: any) => void;
   onLoadMore: (numItems: number) => void;
   status: string;
+  selectedContacts?: Set<string>;
+  onSelectContact?: (contactId: string, isSelected: boolean) => void;
+  onSelectAll?: (isSelected: boolean) => void;
 }
 
-export function ContactList({ contacts, onEdit, onDelete, onLoadMore, status }: ContactListProps) {
+export function ContactList({ 
+  contacts, 
+  onEdit, 
+  onDelete, 
+  onView,
+  onLoadMore, 
+  status, 
+  selectedContacts = new Set(), 
+  onSelectContact, 
+  onSelectAll 
+}: ContactListProps) {
   if (status === "LoadingFirstPage") {
     return (
       <div className="flex justify-center items-center py-8">
@@ -30,6 +44,16 @@ export function ContactList({ contacts, onEdit, onDelete, onLoadMore, status }: 
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {onSelectAll && (
+                  <input
+                    type="checkbox"
+                    checked={selectedContacts.size === contacts.length && contacts.length > 0}
+                    onChange={(e) => onSelectAll(e.target.checked)}
+                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                  />
+                )}
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Name
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -52,6 +76,16 @@ export function ContactList({ contacts, onEdit, onDelete, onLoadMore, status }: 
           <tbody className="bg-white divide-y divide-gray-200">
             {contacts.map((contact) => (
               <tr key={contact._id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {onSelectContact && (
+                    <input
+                      type="checkbox"
+                      checked={selectedContacts.has(contact._id)}
+                      onChange={(e) => onSelectContact(contact._id, e.target.checked)}
+                      className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                    />
+                  )}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div>
                     <div className="text-sm font-medium text-gray-900">
@@ -101,6 +135,14 @@ export function ContactList({ contacts, onEdit, onDelete, onLoadMore, status }: 
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  {onView && (
+                    <button
+                      onClick={() => onView(contact)}
+                      className="text-primary hover:text-primary-hover mr-3"
+                    >
+                      View
+                    </button>
+                  )}
                   <button
                     onClick={() => onEdit(contact)}
                     className="text-primary hover:text-primary-hover mr-3"

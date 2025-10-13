@@ -11,10 +11,14 @@ interface PartyDetailsProps {
 
 export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [selectedInvitations, setSelectedInvitations] = useState<Set<string>>(new Set());
+  const [showBulkActions, setShowBulkActions] = useState(false);
   
   const partyData = useQuery(api.parties.getWithInvitations, { partyId: partyId as any });
   const updateInvitationStatus = useMutation(api.invitations.updateStatus);
   const removeInvitation = useMutation(api.invitations.remove);
+  const batchUpdateInvitationStatus = useMutation(api.invitations.batchUpdateStatus);
+  const batchDeleteInvitations = useMutation(api.invitations.batchDelete);
 
   if (!partyData) {
     return (
@@ -46,6 +50,55 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
     }
   };
 
+  const handleSelectInvitation = (invitationId: string, isSelected: boolean) => {
+    const newSelected = new Set(selectedInvitations);
+    if (isSelected) {
+      newSelected.add(invitationId);
+    } else {
+      newSelected.delete(invitationId);
+    }
+    setSelectedInvitations(newSelected);
+    setShowBulkActions(newSelected.size > 0);
+  };
+
+  const handleSelectAll = (isSelected: boolean) => {
+    if (isSelected) {
+      const allIds = new Set(invitations.map(inv => inv._id));
+      setSelectedInvitations(allIds);
+      setShowBulkActions(true);
+    } else {
+      setSelectedInvitations(new Set());
+      setShowBulkActions(false);
+    }
+  };
+
+  const handleBulkStatusUpdate = async (status: string) => {
+    try {
+      await batchUpdateInvitationStatus({ 
+        ids: Array.from(selectedInvitations) as any[], 
+        status 
+      });
+      toast.success(`${selectedInvitations.size} invitations updated to ${status}`);
+      setSelectedInvitations(new Set());
+      setShowBulkActions(false);
+    } catch (error) {
+      toast.error("Failed to update some invitations");
+    }
+  };
+
+  const handleBulkRemove = async () => {
+    if (confirm(`Are you sure you want to remove ${selectedInvitations.size} invitations?`)) {
+      try {
+        await batchDeleteInvitations({ ids: Array.from(selectedInvitations) as any[] });
+        toast.success(`${selectedInvitations.size} invitations removed`);
+        setSelectedInvitations(new Set());
+        setShowBulkActions(false);
+      } catch (error) {
+        toast.error("Failed to remove some invitations");
+      }
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
@@ -58,6 +111,8 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
         return "bg-red-100 text-red-800";
       case "maybe":
         return "bg-purple-100 text-purple-800";
+      case "attended":
+        return "bg-emerald-100 text-emerald-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -115,6 +170,10 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
                 <div className="text-2xl font-bold text-gray-900">{invitations.length}</div>
                 <div className="text-sm text-gray-600">Total Invited</div>
               </div>
+              <div className="text-center p-3 bg-emerald-50 rounded-lg">
+                <div className="text-2xl font-bold text-emerald-600">{statusCounts.attended || 0}</div>
+                <div className="text-sm text-gray-600">Attended</div>
+              </div>
               <div className="text-center p-3 bg-green-50 rounded-lg">
                 <div className="text-2xl font-bold text-green-600">{statusCounts.accepted || 0}</div>
                 <div className="text-sm text-gray-600">Accepted</div>
@@ -131,6 +190,60 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
           </div>
         </div>
       </div>
+
+      {/* Bulk Actions */}
+      {showBulkActions && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-blue-900">
+                {selectedInvitations.size} invitation{selectedInvitations.size !== 1 ? 's' : ''} selected
+              </span>
+              <button
+                onClick={() => {
+                  setSelectedInvitations(new Set());
+                  setShowBulkActions(false);
+                }}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                Clear selection
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleBulkStatusUpdate("attended")}
+                className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors text-sm"
+              >
+                Mark as Attended
+              </button>
+              <button
+                onClick={() => handleBulkStatusUpdate("accepted")}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
+              >
+                Mark as Accepted
+              </button>
+              <button
+                onClick={() => handleBulkStatusUpdate("declined")}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
+              >
+                Mark as Declined
+              </button>
+              <button
+                onClick={() => handleBulkStatusUpdate("sent")}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+              >
+                Mark as Sent
+              </button>
+              <button
+                onClick={handleBulkRemove}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
+              >
+                Remove Selected
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Invitations */}
       <div className="bg-white rounded-lg shadow-sm border">
@@ -154,6 +267,14 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <input
+                      type="checkbox"
+                      checked={selectedInvitations.size === invitations.length && invitations.length > 0}
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                    />
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Contact
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -173,6 +294,14 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
               <tbody className="bg-white divide-y divide-gray-200">
                 {invitations.map((invitation) => (
                   <tr key={invitation._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={selectedInvitations.has(invitation._id)}
+                        onChange={(e) => handleSelectInvitation(invitation._id, e.target.checked)}
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                      />
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
@@ -194,6 +323,7 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
                         <option value="accepted">Accepted</option>
                         <option value="declined">Declined</option>
                         <option value="maybe">Maybe</option>
+                        <option value="attended">Attended</option>
                       </select>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

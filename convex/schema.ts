@@ -38,7 +38,7 @@ const applicationTables = {
     partyId: v.id("parties"),
     contactId: v.id("contacts"),
     invitedBy: v.id("users"),
-    status: v.string(), // "pending", "sent", "accepted", "declined", "maybe"
+    status: v.string(), // "pending", "sent", "accepted", "declined", "maybe", "attended"
     sentAt: v.optional(v.number()),
     respondedAt: v.optional(v.number()),
     notes: v.optional(v.string()),

@@ -1,19 +1,22 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { PartyForm } from "./PartyForm";
 import { PartyList } from "./PartyList";
-import { PartyDetails } from "./PartyDetails";
 
 export function PartyManager() {
+  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [editingParty, setEditingParty] = useState<any>(null);
-  const [selectedParty, setSelectedParty] = useState<any>(null);
+  const [selectedParties, setSelectedParties] = useState<Set<string>>(new Set());
+  const [showBulkActions, setShowBulkActions] = useState(false);
 
   const parties = useQuery(api.parties.list) ?? [];
   const createParty = useMutation(api.parties.create);
   const updateParty = useMutation(api.parties.update);
+  const batchUpdatePartyStatus = useMutation(api.parties.batchUpdateStatus);
 
   const handleCreateParty = async (data: any) => {
     try {
@@ -35,14 +38,42 @@ export function PartyManager() {
     }
   };
 
-  if (selectedParty) {
-    return (
-      <PartyDetails
-        partyId={selectedParty._id}
-        onBack={() => setSelectedParty(null)}
-      />
-    );
-  }
+  const handleSelectParty = (partyId: string, isSelected: boolean) => {
+    const newSelected = new Set(selectedParties);
+    if (isSelected) {
+      newSelected.add(partyId);
+    } else {
+      newSelected.delete(partyId);
+    }
+    setSelectedParties(newSelected);
+    setShowBulkActions(newSelected.size > 0);
+  };
+
+  const handleSelectAll = (isSelected: boolean) => {
+    if (isSelected) {
+      const allIds = new Set(parties.map(party => party._id));
+      setSelectedParties(allIds);
+      setShowBulkActions(true);
+    } else {
+      setSelectedParties(new Set());
+      setShowBulkActions(false);
+    }
+  };
+
+  const handleBulkStatusChange = async (newStatus: string) => {
+    try {
+      await batchUpdatePartyStatus({ 
+        ids: Array.from(selectedParties) as any[], 
+        status: newStatus 
+      });
+      toast.success(`${selectedParties.size} parties updated to ${newStatus}`);
+      setSelectedParties(new Set());
+      setShowBulkActions(false);
+    } catch (error) {
+      toast.error("Failed to update some parties");
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -57,11 +88,56 @@ export function PartyManager() {
         </button>
       </div>
 
+      {/* Bulk Actions */}
+      {showBulkActions && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-blue-900">
+                {selectedParties.size} part{selectedParties.size !== 1 ? 'ies' : 'y'} selected
+              </span>
+              <button
+                onClick={() => {
+                  setSelectedParties(new Set());
+                  setShowBulkActions(false);
+                }}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                Clear selection
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleBulkStatusChange("active")}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
+              >
+                Mark as Active
+              </button>
+              <button
+                onClick={() => handleBulkStatusChange("completed")}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+              >
+                Mark as Completed
+              </button>
+              <button
+                onClick={() => handleBulkStatusChange("cancelled")}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
+              >
+                Mark as Cancelled
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Party List */}
       <PartyList
         parties={parties}
         onEdit={setEditingParty}
-        onView={setSelectedParty}
+        onView={(party) => navigate(`/parties/${party._id}`)}
+        selectedParties={selectedParties}
+        onSelectParty={handleSelectParty}
+        onSelectAll={handleSelectAll}
       />
 
       {/* Modals */}

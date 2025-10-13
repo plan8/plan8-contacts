@@ -1,18 +1,25 @@
 import { useState } from "react";
 import { useMutation, useQuery, usePaginatedQuery } from "convex/react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { ContactForm } from "./ContactForm";
 import { ContactList } from "./ContactList";
 import { CsvImport } from "./CsvImport";
+import { BulkPartyInvite } from "./BulkPartyInvite";
 
 export function ContactManager() {
+  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [editingContact, setEditingContact] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCompany, setSelectedCompany] = useState("");
   const [selectedSource, setSelectedSource] = useState("");
+  const [selectedCreatedBy, setSelectedCreatedBy] = useState("");
+  const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
+  const [showBulkActions, setShowBulkActions] = useState(false);
+  const [showBulkPartyInvite, setShowBulkPartyInvite] = useState(false);
 
   const {
     results: contacts,
@@ -24,15 +31,18 @@ export function ContactManager() {
       search: searchTerm || undefined,
       company: selectedCompany || undefined,
       source: selectedSource || undefined,
+      createdBy: selectedCreatedBy || undefined,
     },
     { initialNumItems: 20 }
   );
 
   const companies = useQuery(api.contacts.getCompanies) ?? [];
   const sources = useQuery(api.contacts.getSources) ?? [];
+  const createdByUsers = useQuery(api.contacts.getCreatedByUsers) ?? [];
   const createContact = useMutation(api.contacts.create);
   const updateContact = useMutation(api.contacts.update);
   const deleteContact = useMutation(api.contacts.remove);
+  const batchDeleteContacts = useMutation(api.contacts.batchDelete);
 
   const handleCreateContact = async (data: any) => {
     try {
@@ -65,6 +75,41 @@ export function ContactManager() {
     }
   };
 
+  const handleSelectContact = (contactId: string, isSelected: boolean) => {
+    const newSelected = new Set(selectedContacts);
+    if (isSelected) {
+      newSelected.add(contactId);
+    } else {
+      newSelected.delete(contactId);
+    }
+    setSelectedContacts(newSelected);
+    setShowBulkActions(newSelected.size > 0);
+  };
+
+  const handleSelectAll = (isSelected: boolean) => {
+    if (isSelected) {
+      const allIds = new Set(contacts.map(contact => contact._id));
+      setSelectedContacts(allIds);
+      setShowBulkActions(true);
+    } else {
+      setSelectedContacts(new Set());
+      setShowBulkActions(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (confirm(`Are you sure you want to delete ${selectedContacts.size} contacts?`)) {
+      try {
+        await batchDeleteContacts({ ids: Array.from(selectedContacts) as any[] });
+        toast.success(`${selectedContacts.size} contacts deleted successfully`);
+        setSelectedContacts(new Set());
+        setShowBulkActions(false);
+      } catch (error) {
+        toast.error("Failed to delete some contacts");
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -88,7 +133,7 @@ export function ContactManager() {
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow-sm border">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Search
@@ -138,16 +183,73 @@ export function ContactManager() {
               ))}
             </select>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Added By
+            </label>
+            <select
+              value={selectedCreatedBy}
+              onChange={(e) => setSelectedCreatedBy(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+            >
+              <option value="">All Users</option>
+              {createdByUsers.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
+
+      {/* Bulk Actions */}
+      {showBulkActions && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-blue-900">
+                {selectedContacts.size} contact{selectedContacts.size !== 1 ? 's' : ''} selected
+              </span>
+              <button
+                onClick={() => {
+                  setSelectedContacts(new Set());
+                  setShowBulkActions(false);
+                }}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                Clear selection
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowBulkPartyInvite(true)}
+                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors text-sm"
+              >
+                Add to Party
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
+              >
+                Delete Selected
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Contact List */}
       <ContactList
         contacts={contacts}
         onEdit={setEditingContact}
         onDelete={handleDeleteContact}
+        onView={(contact) => navigate(`/contacts/${contact._id}`)}
         onLoadMore={loadMore}
         status={status}
+        selectedContacts={selectedContacts}
+        onSelectContact={handleSelectContact}
+        onSelectAll={handleSelectAll}
       />
 
       {/* Modals */}
@@ -168,6 +270,17 @@ export function ContactManager() {
 
       {showImport && (
         <CsvImport onClose={() => setShowImport(false)} />
+      )}
+
+      {showBulkPartyInvite && (
+        <BulkPartyInvite
+          selectedContactIds={Array.from(selectedContacts)}
+          onClose={() => setShowBulkPartyInvite(false)}
+          onSuccess={() => {
+            setSelectedContacts(new Set());
+            setShowBulkActions(false);
+          }}
+        />
       )}
     </div>
   );
