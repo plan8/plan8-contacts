@@ -1,0 +1,76 @@
+---
+alwaysApply: true
+---
+
+# Plan8 Contacts Application Summary
+
+## Application Purpose
+Contact management system with party/event invitation tracking. Built with React (Vite) frontend and Convex backend. Supports multiple contact import methods (manual, CSV, LinkedIn).
+
+## Tech Stack
+- **Frontend**: React 19, TypeScript, Tailwind CSS, Vite
+- **Backend**: Convex (serverless backend with real-time queries)
+- **Auth**: Convex Auth with Password and Anonymous providers
+- **UI Components**: Custom components with Sonner for toasts
+- **Package Manager**: Always use pnpm for package management
+
+## Database Schema (convex/schema.ts)
+Three main tables:
+1. **contacts** - stores contact information with fields like firstName, lastName, email, phone, company, position, source, tags, notes
+2. **parties** - stores party/event details with name, description, date, location, status
+3. **invitations** - junction table linking parties and contacts with invitation status tracking
+
+## Key Features
+
+### Contact Management (convex/contacts.ts)
+- List contacts with pagination and search (including fuzzy domain search)
+- Filter by company and source
+- CRUD operations for contacts
+- CSV import with automatic company detection from email domains
+- LinkedIn import support
+- Company suggestion from email domain
+
+### Party Management (convex/parties.ts)
+- Create and update parties/events
+- View party details with invitations
+- Track party status (planning, active, completed, cancelled)
+
+### Invitation System (convex/invitations.ts)
+- Create individual or bulk invitations
+- Track invitation status (pending, sent, accepted, declined, maybe)
+- Automatic timestamp tracking for sent/responded dates
+- Prevent duplicate invitations
+
+## Frontend Architecture
+
+### Main App (src/App.tsx)
+- Tab-based navigation between Contacts and Parties
+- Authentication state management
+- Authenticated/Unauthenticated views
+
+### Contact Features (src/components/ContactManager.tsx)
+- Paginated contact list
+- Search and filter controls
+- Import functionality (CSV/LinkedIn)
+- Contact CRUD operations
+
+### Party Features (src/components/PartyManager.tsx)
+- Party list view
+- Party details with invitation management
+- Status tracking
+
+## Implementation Details
+
+### Authentication
+- Uses Convex Auth with Password and Anonymous providers
+- User-specific data isolation (createdBy field)
+
+### Data Patterns
+- Pagination using Convex's paginationOptsValidator
+- Search using search indexes and fallback fuzzy matching
+- Related data loading with Promise.all for invitations + contact details
+
+### Smart Features
+- Automatic company detection from email domains (skips common providers like gmail)
+- Fuzzy domain search for finding contacts by partial domain names
+- Duplicate prevention for invitations
