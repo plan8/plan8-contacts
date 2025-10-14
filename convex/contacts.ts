@@ -228,7 +228,9 @@ export const importFromCsv = mutation({
       }
 
       const id = await ctx.db.insert("contacts", {
-        ...contact,
+        firstName: contact.firstName,
+        lastName: contact.lastName || "",
+        email: contact.email,
         company,
         createdBy: userId,
       });
