@@ -29,6 +29,7 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
   const removeInvitation = useMutation(api.invitations.remove);
   const batchUpdateInvitationStatus = useMutation(api.invitations.batchUpdateStatus);
   const batchDeleteInvitations = useMutation(api.invitations.batchDelete);
+  const deleteParty = useMutation(api.parties.remove);
 
   if (!partyData) {
     return (
@@ -110,6 +111,18 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
     }
   };
 
+  const handleDeleteParty = async () => {
+    if (confirm(`Are you sure you want to delete "${party.name}"? This will also delete all ${invitations.length} invitations associated with this party. This action cannot be undone.`)) {
+      try {
+        await deleteParty({ id: partyId as any });
+        toast.success("Party deleted successfully");
+        onBack(); // Navigate back to parties list
+      } catch (error) {
+        toast.error("Failed to delete party");
+      }
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
@@ -137,14 +150,22 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onBack}
+            className="px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            ← Back
+          </button>
+          <h1 className="text-2xl font-bold text-gray-900">{party.name}</h1>
+        </div>
         <button
-          onClick={onBack}
-          className="px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+          onClick={handleDeleteParty}
+          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
         >
-          ← Back
+          Delete Party
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">{party.name}</h1>
       </div>
 
       {/* Party Info */}

@@ -72,6 +72,28 @@ export const batchUpdateStatus = mutation({
   },
 });
 
+export const remove = mutation({
+  args: { id: v.id("parties") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const party = await ctx.db.get(args.id);
+    if (!party) throw new Error("Party not found");
+
+    // Delete all invitations for this party first
+    const invitations = await ctx.db
+      .query("invitations")
+      .withIndex("by_party", (q) => q.eq("partyId", args.id))
+      .collect();
+    
+    await Promise.all(invitations.map(invitation => ctx.db.delete(invitation._id)));
+
+    // Delete the party
+    await ctx.db.delete(args.id);
+  },
+});
+
 export const getWithInvitations = query({
   args: { partyId: v.id("parties") },
   handler: async (ctx, args) => {
