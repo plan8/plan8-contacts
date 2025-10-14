@@ -71,43 +71,47 @@ export function ContactDetails({ contactId, onBack }: ContactDetailsProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <button
             onClick={onBack}
-            className="text-gray-600 hover:text-gray-900"
+            className="text-gray-600 hover:text-gray-900 flex items-center gap-1"
           >
-            ← Back to Contacts
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span className="hidden sm:inline">Back to Contacts</span>
+            <span className="sm:hidden">Back</span>
           </button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
               {contact.firstName} {contact.lastName}
             </h1>
-            <p className="text-gray-600">{contact.email}</p>
+            <p className="text-gray-600 truncate">{contact.email}</p>
             {contact.company && (
-              <p className="text-sm text-gray-500">{contact.company}</p>
+              <p className="text-sm text-gray-500 truncate">{contact.company}</p>
             )}
           </div>
         </div>
         <button
           onClick={() => setShowInviteModal(true)}
-          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
+          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors whitespace-nowrap"
         >
           Invite to Party
         </button>
       </div>
 
       {/* Contact Info */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
         <h2 className="text-lg font-semibold mb-4">Contact Information</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Email</label>
-            <p className="text-sm text-gray-900">{contact.email || "Not provided"}</p>
+            <p className="text-sm text-gray-900 break-all">{contact.email || "Not provided"}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Company</label>
-            <p className="text-sm text-gray-900">{contact.company || "Not provided"}</p>
+            <p className="text-sm text-gray-900 break-words">{contact.company || "Not provided"}</p>
           </div>
           {contact.tags && contact.tags.length > 0 && (
             <div>
@@ -124,43 +128,43 @@ export function ContactDetails({ contactId, onBack }: ContactDetailsProps) {
               </div>
             </div>
           )}
+          {contact.notes && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Notes</label>
+              <p className="text-sm text-gray-900 mt-1 break-words">{contact.notes}</p>
+            </div>
+          )}
         </div>
-        {contact.notes && (
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700">Notes</label>
-            <p className="text-sm text-gray-900 mt-1">{contact.notes}</p>
-          </div>
-        )}
       </div>
 
       {/* Invitation Summary */}
       {invitations && invitations.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
           <h2 className="text-lg font-semibold mb-4">Party Invitations Summary</h2>
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-600">{statusCounts.pending || 0}</div>
-              <div className="text-sm text-gray-600">Pending</div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="text-center p-3 bg-yellow-50 rounded-lg">
+              <div className="text-xl sm:text-2xl font-bold text-yellow-600">{statusCounts.pending || 0}</div>
+              <div className="text-xs sm:text-sm text-gray-600">Pending</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{statusCounts.sent || 0}</div>
-              <div className="text-sm text-gray-600">Sent</div>
+            <div className="text-center p-3 bg-blue-50 rounded-lg">
+              <div className="text-xl sm:text-2xl font-bold text-blue-600">{statusCounts.sent || 0}</div>
+              <div className="text-xs sm:text-sm text-gray-600">Sent</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{statusCounts.accepted || 0}</div>
-              <div className="text-sm text-gray-600">Accepted</div>
+            <div className="text-center p-3 bg-green-50 rounded-lg">
+              <div className="text-xl sm:text-2xl font-bold text-green-600">{statusCounts.accepted || 0}</div>
+              <div className="text-xs sm:text-sm text-gray-600">Accepted</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{statusCounts.declined || 0}</div>
-              <div className="text-sm text-gray-600">Declined</div>
+            <div className="text-center p-3 bg-red-50 rounded-lg">
+              <div className="text-xl sm:text-2xl font-bold text-red-600">{statusCounts.declined || 0}</div>
+              <div className="text-xs sm:text-sm text-gray-600">Declined</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">{statusCounts.maybe || 0}</div>
-              <div className="text-sm text-gray-600">Maybe</div>
+            <div className="text-center p-3 bg-orange-50 rounded-lg">
+              <div className="text-xl sm:text-2xl font-bold text-orange-600">{statusCounts.maybe || 0}</div>
+              <div className="text-xs sm:text-sm text-gray-600">Maybe</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-emerald-600">{statusCounts.attended || 0}</div>
-              <div className="text-sm text-gray-600">Attended</div>
+            <div className="text-center p-3 bg-emerald-50 rounded-lg">
+              <div className="text-xl sm:text-2xl font-bold text-emerald-600">{statusCounts.attended || 0}</div>
+              <div className="text-xs sm:text-sm text-gray-600">Attended</div>
             </div>
           </div>
         </div>
@@ -168,8 +172,8 @@ export function ContactDetails({ contactId, onBack }: ContactDetailsProps) {
 
       {/* Party Invitations */}
       <div className="bg-white rounded-lg shadow-sm border">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">Party Invitations</h2>
             <span className="text-sm text-gray-500">
               {invitations?.length || 0} invitation{invitations?.length !== 1 ? 's' : ''}
@@ -178,7 +182,7 @@ export function ContactDetails({ contactId, onBack }: ContactDetailsProps) {
         </div>
 
         {!invitations || invitations.length === 0 ? (
-          <div className="p-6 text-center text-gray-500">
+          <div className="p-4 sm:p-6 text-center text-gray-500">
             No party invitations yet. Invite this contact to a party to get started.
           </div>
         ) : (
@@ -186,19 +190,19 @@ export function ContactDetails({ contactId, onBack }: ContactDetailsProps) {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Party Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                     Date & Time
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                     Location
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                     Invited Date
                   </th>
                 </tr>
@@ -206,9 +210,9 @@ export function ContactDetails({ contactId, onBack }: ContactDetailsProps) {
               <tbody className="bg-white divide-y divide-gray-200">
                 {invitations.map((invitation) => (
                   <tr key={invitation._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
+                    <td className="px-4 sm:px-6 py-4">
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate">
                           {invitation.party?.name || "Unknown Party"}
                         </div>
                         {invitation.party?.description && (
@@ -216,9 +220,21 @@ export function ContactDetails({ contactId, onBack }: ContactDetailsProps) {
                             {invitation.party.description}
                           </div>
                         )}
+                        <div className="sm:hidden mt-1">
+                          {invitation.party?.date && (
+                            <div className="text-xs text-gray-500">
+                              {new Date(invitation.party.date).toLocaleDateString()}
+                            </div>
+                          )}
+                          {invitation.party?.location && (
+                            <div className="text-xs text-gray-500 truncate">
+                              📍 {invitation.party.location}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-4 sm:px-6 py-4 text-sm text-gray-900 hidden sm:table-cell">
                       {invitation.party?.date ? (
                         <div>
                           <div>{new Date(invitation.party.date).toLocaleDateString()}</div>
@@ -230,15 +246,15 @@ export function ContactDetails({ contactId, onBack }: ContactDetailsProps) {
                         "-"
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {invitation.party?.location || "-"}
+                    <td className="px-4 sm:px-6 py-4 text-sm text-gray-900 hidden md:table-cell">
+                      <div className="truncate">{invitation.party?.location || "-"}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 sm:px-6 py-4">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(invitation.status)}`}>
                         {invitation.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-4 sm:px-6 py-4 text-sm text-gray-500 hidden lg:table-cell">
                       {invitation.sentAt ? (
                         new Date(invitation.sentAt).toLocaleDateString()
                       ) : (
@@ -255,8 +271,8 @@ export function ContactDetails({ contactId, onBack }: ContactDetailsProps) {
 
       {/* Invite Modal */}
       {showInviteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">Invite to Party</h2>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
