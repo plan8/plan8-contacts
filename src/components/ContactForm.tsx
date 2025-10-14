@@ -13,10 +13,7 @@ export function ContactForm({ contact, onSubmit, onClose }: ContactFormProps) {
     firstName: contact?.firstName || "",
     lastName: contact?.lastName || "",
     email: contact?.email || "",
-    phone: contact?.phone || "",
     company: contact?.company || "",
-    position: contact?.position || "",
-    source: contact?.source || "manual",
     tags: contact?.tags?.join(", ") || "",
     notes: contact?.notes || "",
   });
@@ -87,11 +84,10 @@ export function ContactForm({ contact, onSubmit, onClose }: ContactFormProps) {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Last Name *
+                Last Name
               </label>
               <input
                 type="text"
-                required
                 value={formData.lastName}
                 onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
@@ -111,17 +107,6 @@ export function ContactForm({ contact, onSubmit, onClose }: ContactFormProps) {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Phone
-            </label>
-            <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-            />
-          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -162,33 +147,6 @@ export function ContactForm({ contact, onSubmit, onClose }: ContactFormProps) {
             )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Position
-            </label>
-            <input
-              type="text"
-              value={formData.position}
-              onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Source
-            </label>
-            <select
-              value={formData.source}
-              onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-            >
-              <option value="manual">Manual</option>
-              <option value="csv">CSV Import</option>
-              <option value="hubspot">HubSpot</option>
-              <option value="linkedin">LinkedIn</option>
-            </select>
-          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

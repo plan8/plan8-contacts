@@ -7,10 +7,7 @@ const applicationTables = {
     firstName: v.string(),
     lastName: v.string(),
     email: v.optional(v.string()),
-    phone: v.optional(v.string()),
     company: v.optional(v.string()),
-    position: v.optional(v.string()),
-    source: v.string(), // "manual", "csv", "hubspot", "linkedin"
     tags: v.optional(v.array(v.string())),
     notes: v.optional(v.string()),
     createdBy: v.id("users"),
@@ -20,7 +17,7 @@ const applicationTables = {
     .index("by_created_by", ["createdBy"])
     .searchIndex("search_contacts", {
       searchField: "firstName",
-      filterFields: ["company", "source"],
+      filterFields: ["company"],
     }),
 
   parties: defineTable({

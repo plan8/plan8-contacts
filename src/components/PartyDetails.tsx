@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useMutation, useQuery, usePaginatedQuery } from "convex/react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
 import { InviteContacts } from "./InviteContacts";
+import { QRCodeComponent } from "./QRCode";
 
 interface PartyDetailsProps {
   partyId: string;
@@ -10,11 +12,19 @@ interface PartyDetailsProps {
 }
 
 export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
+  const navigate = useNavigate();
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedInvitations, setSelectedInvitations] = useState<Set<string>>(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
   
   const partyData = useQuery(api.parties.getWithInvitations, { partyId: partyId as any });
+  const filteredInvitations = useQuery(api.invitations.getByParty, { 
+    partyId: partyId as any,
+    search: searchTerm || undefined,
+    status: selectedStatus || undefined,
+  });
   const updateInvitationStatus = useMutation(api.invitations.updateStatus);
   const removeInvitation = useMutation(api.invitations.remove);
   const batchUpdateInvitationStatus = useMutation(api.invitations.batchUpdateStatus);
@@ -28,7 +38,8 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
     );
   }
 
-  const { party, invitations } = partyData;
+  const { party } = partyData;
+  const invitations = filteredInvitations || [];
 
   const handleStatusUpdate = async (invitationId: string, status: string) => {
     try {
@@ -189,6 +200,42 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
             </div>
           </div>
         </div>
+        
+        {/* Public Attendance Link */}
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Public Attendance</h3>
+              <p className="text-xs text-gray-500 mb-4">Share this link or QR code for public attendance registration</p>
+              
+              <div className="flex items-center gap-2 mb-4">
+                <input
+                  type="text"
+                  readOnly
+                  value={`${window.location.origin}/parties/${partyId}/attendance`}
+                  className="px-3 py-1 text-xs bg-gray-50 border border-gray-200 rounded text-gray-600 flex-1"
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/parties/${partyId}/attendance`);
+                    toast.success("Link copied to clipboard!");
+                  }}
+                  className="px-3 py-1 text-xs bg-primary text-white rounded hover:bg-primary-hover transition-colors"
+                >
+                  Copy Link
+                </button>
+              </div>
+            </div>
+            
+            <div className="ml-6">
+              <QRCodeComponent 
+                text={`${window.location.origin}/parties/${partyId}/attendance`}
+                size={150}
+                className="border border-gray-200 rounded-lg p-2 bg-white"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Bulk Actions */}
@@ -248,7 +295,16 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
       {/* Invitations */}
       <div className="bg-white rounded-lg shadow-sm border">
         <div className="px-6 py-4 border-b flex justify-between items-center">
-          <h2 className="text-lg font-semibold">Invitations</h2>
+          <div>
+            <h2 className="text-lg font-semibold">Invitations</h2>
+            {(searchTerm || selectedStatus) && (
+              <p className="text-sm text-gray-600 mt-1">
+                Showing {invitations.length} result{invitations.length !== 1 ? 's' : ''}
+                {searchTerm && ` for "${searchTerm}"`}
+                {selectedStatus && ` with status "${selectedStatus}"`}
+              </p>
+            )}
+          </div>
           <button
             onClick={() => setShowInviteModal(true)}
             className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
@@ -256,10 +312,60 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
             Invite Contacts
           </button>
         </div>
+
+        {/* Filters */}
+        <div className="px-6 py-4 border-b bg-gray-50">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Search contacts
+              </label>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by name, email, or company..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+              />
+            </div>
+            <div className="sm:w-48">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Filter by status
+              </label>
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+              >
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="sent">Sent</option>
+                <option value="accepted">Accepted</option>
+                <option value="declined">Declined</option>
+                <option value="maybe">Maybe</option>
+                <option value="attended">Attended</option>
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setSearchTerm("");
+                  setSelectedStatus("");
+                }}
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Clear Filters
+              </button>
+            </div>
+          </div>
+        </div>
         
         {invitations.length === 0 ? (
           <div className="p-6 text-center text-gray-500">
-            No invitations sent yet. Start by inviting some contacts.
+            {searchTerm || selectedStatus ? 
+              "No invitations match your current filters. Try adjusting your search or filter criteria." :
+              "No invitations sent yet. Start by inviting some contacts."
+            }
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -333,12 +439,20 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
                       {new Date(invitation._creationTime).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => handleRemoveInvitation(invitation._id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Remove
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => navigate(`/contacts/${invitation.contactId}`)}
+                          className="text-primary hover:text-primary-hover"
+                        >
+                          View Contact
+                        </button>
+                        <button
+                          onClick={() => handleRemoveInvitation(invitation._id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

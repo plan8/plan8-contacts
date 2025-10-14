@@ -15,7 +15,6 @@ export function ContactManager() {
   const [editingContact, setEditingContact] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCompany, setSelectedCompany] = useState("");
-  const [selectedSource, setSelectedSource] = useState("");
   const [selectedCreatedBy, setSelectedCreatedBy] = useState("");
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
@@ -30,14 +29,12 @@ export function ContactManager() {
     {
       search: searchTerm || undefined,
       company: selectedCompany || undefined,
-      source: selectedSource || undefined,
       createdBy: selectedCreatedBy || undefined,
     },
     { initialNumItems: 20 }
   );
 
   const companies = useQuery(api.contacts.getCompanies) ?? [];
-  const sources = useQuery(api.contacts.getSources) ?? [];
   const createdByUsers = useQuery(api.contacts.getCreatedByUsers) ?? [];
   const createContact = useMutation(api.contacts.create);
   const updateContact = useMutation(api.contacts.update);
@@ -133,7 +130,7 @@ export function ContactManager() {
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow-sm border">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Search
@@ -162,23 +159,6 @@ export function ContactManager() {
               {companies.map((company) => (
                 <option key={company} value={company}>
                   {company}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Source
-            </label>
-            <select
-              value={selectedSource}
-              onChange={(e) => setSelectedSource(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-            >
-              <option value="">All Sources</option>
-              {sources.map((source) => (
-                <option key={source} value={source}>
-                  {source}
                 </option>
               ))}
             </select>

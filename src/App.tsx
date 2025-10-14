@@ -8,6 +8,7 @@ import { PartyManager } from "./components/PartyManager";
 import { Navigation } from "./components/Navigation";
 import { PartyDetailsWrapper } from "./components/PartyDetailsWrapper";
 import { ContactDetailsWrapper } from "./components/ContactDetailsWrapper";
+import { PublicAttendanceWrapper } from "./components/PublicAttendanceWrapper";
 
 export default function App() {
   return (
@@ -49,15 +50,20 @@ function Content() {
       </Authenticated>
 
       <Unauthenticated>
-        <div className="flex flex-col items-center justify-center min-h-[400px] gap-8">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-primary mb-4">Contact Manager</h1>
-            <p className="text-xl text-gray-600">
-              Manage your company contacts and party invitations
-            </p>
-          </div>
-          <SignInForm />
-        </div>
+        <Routes>
+          <Route path="/parties/:partyId/attendance" element={<PublicAttendanceWrapper />} />
+          <Route path="*" element={
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-8">
+              <div className="text-center">
+                <h1 className="text-4xl font-bold text-primary mb-4">Plan8 Contacts</h1>
+                <p className="text-xl text-gray-600">
+                  Manage your company contacts and party invitations
+                </p>
+              </div>
+              <SignInForm />
+            </div>
+          } />
+        </Routes>
       </Unauthenticated>
     </>
   );

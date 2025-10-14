@@ -11,9 +11,7 @@ interface ColumnMapping {
   firstName: string;
   lastName: string;
   email: string;
-  phone: string;
   company: string;
-  position: string;
   [key: string]: string;
 }
 
@@ -26,9 +24,7 @@ export function CsvImport({ onClose }: CsvImportProps) {
     firstName: "",
     lastName: "",
     email: "",
-    phone: "",
-    company: "",
-    position: ""
+    company: ""
   });
   const [previewData, setPreviewData] = useState<any[]>([]);
   const importContacts = useMutation(api.contacts.importFromCsv);
@@ -82,9 +78,7 @@ export function CsvImport({ onClose }: CsvImportProps) {
       firstName: "",
       lastName: "",
       email: "",
-      phone: "",
-      company: "",
-      position: ""
+      company: ""
     };
     
     detectedHeaders.forEach((header, index) => {
@@ -96,12 +90,8 @@ export function CsvImport({ onClose }: CsvImportProps) {
         autoMapping.lastName = header;
       } else if (lowerHeader.includes('email')) {
         autoMapping.email = header;
-      } else if (lowerHeader.includes('phone') || lowerHeader.includes('tel')) {
-        autoMapping.phone = header;
       } else if (lowerHeader.includes('company') || lowerHeader.includes('företag')) {
         autoMapping.company = header;
-      } else if (lowerHeader.includes('position') || lowerHeader.includes('title') || lowerHeader.includes('ansvar')) {
-        autoMapping.position = header;
       }
     });
     

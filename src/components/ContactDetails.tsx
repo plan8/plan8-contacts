@@ -106,20 +106,8 @@ export function ContactDetails({ contactId, onBack }: ContactDetailsProps) {
             <p className="text-sm text-gray-900">{contact.email || "Not provided"}</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Phone</label>
-            <p className="text-sm text-gray-900">{contact.phone || "Not provided"}</p>
-          </div>
-          <div>
             <label className="block text-sm font-medium text-gray-700">Company</label>
             <p className="text-sm text-gray-900">{contact.company || "Not provided"}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Position</label>
-            <p className="text-sm text-gray-900">{contact.position || "Not provided"}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Source</label>
-            <p className="text-sm text-gray-900 capitalize">{contact.source}</p>
           </div>
           {contact.tags && contact.tags.length > 0 && (
             <div>

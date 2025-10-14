@@ -105,3 +105,21 @@ export const getWithInvitations = query({
     };
   },
 });
+
+// Public query to get party information (no auth required)
+export const getPublic = query({
+  args: { partyId: v.id("parties") },
+  handler: async (ctx, args) => {
+    const party = await ctx.db.get(args.partyId);
+    if (!party) throw new Error("Party not found");
+    
+    return {
+      _id: party._id,
+      name: party.name,
+      description: party.description,
+      date: party.date,
+      location: party.location,
+      status: party.status,
+    };
+  },
+});

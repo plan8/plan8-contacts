@@ -44,7 +44,6 @@ export const list = query({
     paginationOpts: paginationOptsValidator,
     search: v.optional(v.string()),
     company: v.optional(v.string()),
-    source: v.optional(v.string()),
     createdBy: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
@@ -59,9 +58,6 @@ export const list = query({
           let searchQuery = q.search("firstName", args.search!);
           if (args.company) {
             searchQuery = searchQuery.eq("company", args.company);
-          }
-          if (args.source) {
-            searchQuery = searchQuery.eq("source", args.source);
           }
           return searchQuery;
         })
@@ -90,7 +86,6 @@ export const list = query({
         // Apply additional filters
         const filteredMatches = fuzzyMatches.filter(contact => {
           if (args.company && contact.company !== args.company) return false;
-          if (args.source && contact.source !== args.source) return false;
           return true;
         });
 
@@ -136,10 +131,7 @@ export const create = mutation({
     firstName: v.string(),
     lastName: v.string(),
     email: v.optional(v.string()),
-    phone: v.optional(v.string()),
     company: v.optional(v.string()),
-    position: v.optional(v.string()),
-    source: v.string(),
     tags: v.optional(v.array(v.string())),
     notes: v.optional(v.string()),
   },
@@ -170,9 +162,7 @@ export const update = mutation({
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
     email: v.optional(v.string()),
-    phone: v.optional(v.string()),
     company: v.optional(v.string()),
-    position: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
     notes: v.optional(v.string()),
   },
@@ -219,9 +209,7 @@ export const importFromCsv = mutation({
       firstName: v.string(),
       lastName: v.string(),
       email: v.optional(v.string()),
-      phone: v.optional(v.string()),
       company: v.optional(v.string()),
-      position: v.optional(v.string()),
     })),
   },
   handler: async (ctx, args) => {
@@ -242,7 +230,6 @@ export const importFromCsv = mutation({
       const id = await ctx.db.insert("contacts", {
         ...contact,
         company,
-        source: "csv",
         createdBy: userId,
       });
       results.push(id);
@@ -258,7 +245,6 @@ export const importFromLinkedIn = mutation({
       lastName: v.string(),
       email: v.optional(v.string()),
       company: v.optional(v.string()),
-      position: v.optional(v.string()),
       url: v.optional(v.string()),
       connectedOn: v.optional(v.string()),
     })),
@@ -282,9 +268,7 @@ export const importFromLinkedIn = mutation({
         lastName: contact.lastName,
         email: contact.email,
         company,
-        position: contact.position,
         notes: notes || undefined,
-        source: "linkedin",
         createdBy: userId,
       });
       results.push(id);
@@ -305,17 +289,6 @@ export const getCompanies = query({
   },
 });
 
-export const getSources = query({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-
-    const contacts = await ctx.db.query("contacts").collect();
-    const sources = [...new Set(contacts.map(c => c.source))];
-    return sources.sort();
-  },
-});
 
 export const getCreatedByUsers = query({
   args: {},
