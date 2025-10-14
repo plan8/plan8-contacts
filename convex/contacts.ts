@@ -139,6 +139,18 @@ export const create = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
+    // Check for duplicate by email if email is provided
+    if (args.email) {
+      const existingContact = await ctx.db
+        .query("contacts")
+        .withIndex("by_email", (q) => q.eq("email", args.email))
+        .first();
+      
+      if (existingContact) {
+        throw new Error(`A contact with email "${args.email}" already exists`);
+      }
+    }
+
     // If no company provided but email exists, try to guess from email domain
     let company = args.company;
     if (!company && args.email) {
@@ -236,7 +248,26 @@ export const importFromCsv = mutation({
     if (!userId) throw new Error("Not authenticated");
 
     const results = [];
+    const duplicates = [];
+    
     for (const contact of args.contacts) {
+      // Check for duplicate by email if email is provided
+      if (contact.email) {
+        const existingContact = await ctx.db
+          .query("contacts")
+          .withIndex("by_email", (q) => q.eq("email", contact.email))
+          .first();
+        
+        if (existingContact) {
+          duplicates.push({
+            name: `${contact.firstName} ${contact.lastName || ""}`.trim(),
+            email: contact.email,
+            reason: "Email already exists"
+          });
+          continue; // Skip this contact
+        }
+      }
+
       // Guess company from email if not provided
       let company = contact.company;
       if (!company && contact.email) {
@@ -255,7 +286,16 @@ export const importFromCsv = mutation({
       });
       results.push(id);
     }
-    return results;
+    
+    return {
+      imported: results,
+      duplicates: duplicates,
+      summary: {
+        total: args.contacts.length,
+        imported: results.length,
+        skipped: duplicates.length
+      }
+    };
   },
 });
 
@@ -273,8 +313,28 @@ export const importFromLinkedIn = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    
     const results = [];
+    const duplicates = [];
+    
     for (const contact of args.contacts) {
+      // Check for duplicate by email if email is provided
+      if (contact.email) {
+        const existingContact = await ctx.db
+          .query("contacts")
+          .withIndex("by_email", (q) => q.eq("email", contact.email))
+          .first();
+        
+        if (existingContact) {
+          duplicates.push({
+            name: `${contact.firstName} ${contact.lastName}`.trim(),
+            email: contact.email,
+            reason: "Email already exists"
+          });
+          continue; // Skip this contact
+        }
+      }
+
       let company = contact.company;
       if (!company && contact.email) {
         company = guessCompanyFromEmail(contact.email);
@@ -294,7 +354,16 @@ export const importFromLinkedIn = mutation({
       });
       results.push(id);
     }
-    return results;
+    
+    return {
+      imported: results,
+      duplicates: duplicates,
+      summary: {
+        total: args.contacts.length,
+        imported: results.length,
+        skipped: duplicates.length
+      }
+    };
   },
 });
 
