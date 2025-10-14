@@ -17,7 +17,9 @@ export function Navigation() {
   return (
     <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b shadow-sm">
       <div className="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-primary">Plan8 Contacts</h2>
+        <Link to="/" className="text-xl font-semibold text-primary">
+          Plan8 Contacts
+        </Link>
         
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-4">
