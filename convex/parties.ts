@@ -10,7 +10,6 @@ export const list = query({
 
     return await ctx.db
       .query("parties")
-      .withIndex("by_created_by", (q) => q.eq("createdBy", userId))
       .order("desc")
       .collect();
   },
