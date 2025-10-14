@@ -44,6 +44,7 @@ function Content() {
               <Route path="/contacts/:contactId" element={<ContactDetailsWrapper />} />
               <Route path="/parties" element={<PartyManager />} />
               <Route path="/parties/:partyId" element={<PartyDetailsWrapper />} />
+              <Route path="/parties/:partyId/attendance" element={<PublicAttendanceWrapper />} />
             </Routes>
           </div>
         </main>
