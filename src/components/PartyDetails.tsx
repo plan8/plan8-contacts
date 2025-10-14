@@ -203,34 +203,36 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
         
         {/* Public Attendance Link */}
         <div className="mt-4 pt-4 border-t border-gray-200">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
+          <div className="space-y-4">
+            <div>
               <h3 className="text-sm font-medium text-gray-700 mb-2">Public Attendance</h3>
-              <p className="text-xs text-gray-500 mb-4">Share this link or QR code for public attendance registration</p>
-              
-              <div className="flex items-center gap-2 mb-4">
-                <input
-                  type="text"
-                  readOnly
-                  value={`${window.location.origin}/parties/${partyId}/attendance`}
-                  className="px-3 py-1 text-xs bg-gray-50 border border-gray-200 rounded text-gray-600 flex-1"
-                />
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/parties/${partyId}/attendance`);
-                    toast.success("Link copied to clipboard!");
-                  }}
-                  className="px-3 py-1 text-xs bg-primary text-white rounded hover:bg-primary-hover transition-colors"
-                >
-                  Copy Link
-                </button>
-              </div>
+              <p className="text-xs text-gray-500">Share this link or QR code for public attendance registration</p>
             </div>
             
-            <div className="ml-6">
+            {/* Link Section */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                readOnly
+                value={`${window.location.origin}/parties/${partyId}/attendance`}
+                className="px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded text-gray-600 flex-1"
+              />
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/parties/${partyId}/attendance`);
+                  toast.success("Link copied to clipboard!");
+                }}
+                className="px-4 py-2 text-sm bg-primary text-white rounded hover:bg-primary-hover transition-colors whitespace-nowrap"
+              >
+                Copy Link
+              </button>
+            </div>
+            
+            {/* QR Code Section */}
+            <div className="flex justify-center sm:justify-start">
               <QRCodeComponent 
                 text={`${window.location.origin}/parties/${partyId}/attendance`}
-                size={150}
+                size={120}
                 className="border border-gray-200 rounded-lg p-2 bg-white"
               />
             </div>
