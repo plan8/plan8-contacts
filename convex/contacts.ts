@@ -187,6 +187,15 @@ export const remove = mutation({
     const contact = await ctx.db.get(args.id);
     if (!contact) throw new Error("Contact not found");
 
+    // Delete all invitations for this contact
+    const invitations = await ctx.db
+      .query("invitations")
+      .withIndex("by_contact", (q) => q.eq("contactId", args.id))
+      .collect();
+    
+    await Promise.all(invitations.map(invitation => ctx.db.delete(invitation._id)));
+
+    // Delete the contact
     await ctx.db.delete(args.id);
   },
 });
@@ -197,7 +206,17 @@ export const batchDelete = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    // Delete all contacts in a single operation
+    // Delete all invitations for these contacts
+    for (const contactId of args.ids) {
+      const invitations = await ctx.db
+        .query("invitations")
+        .withIndex("by_contact", (q) => q.eq("contactId", contactId))
+        .collect();
+      
+      await Promise.all(invitations.map(invitation => ctx.db.delete(invitation._id)));
+    }
+
+    // Delete the contacts
     await Promise.all(args.ids.map(id => ctx.db.delete(id)));
     return args.ids.length;
   },
