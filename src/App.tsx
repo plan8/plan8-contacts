@@ -14,6 +14,7 @@ import { Navigation } from "./components/Navigation";
 import { PartyDetailsWrapper } from "./components/PartyDetailsWrapper";
 import { ContactDetailsWrapper } from "./components/ContactDetailsWrapper";
 import { PublicAttendanceWrapper } from "./components/PublicAttendanceWrapper";
+import { DoormanWrapper } from "./components/DoormanWrapper";
 
 export default function App() {
   return (
@@ -42,7 +43,7 @@ function Content() {
       <Authenticated>
         <Navigation />
         <main className="flex-1">
-          <div className="max-w-7xl mx-auto p-6">
+          <div className="max-w-7xl mx-auto p-2">
             <Routes>
               <Route path="/" element={<Navigate to="/contacts" replace />} />
               <Route path="/contacts" element={<ContactManager />} />
@@ -58,6 +59,10 @@ function Content() {
               <Route
                 path="/parties/:partyId/attendance"
                 element={<PublicAttendanceWrapper />}
+              />
+              <Route
+                path="/parties/:partyId/doorman"
+                element={<DoormanWrapper />}
               />
             </Routes>
           </div>

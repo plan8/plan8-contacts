@@ -307,12 +307,20 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
               </p>
             )}
           </div>
-          <button
-            onClick={() => setShowInviteModal(true)}
-            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
-          >
-            Invite Contacts
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
+            >
+              Invite Contacts
+            </button>
+            <button
+              onClick={() => navigate(`/parties/${partyId}/doorman`)}
+              className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
+            >
+              Doorman View
+            </button>
+          </div>
         </div>
 
         {/* Filters */}
