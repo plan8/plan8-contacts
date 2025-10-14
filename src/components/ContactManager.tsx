@@ -185,10 +185,10 @@ export function ContactManager() {
 
       {/* Bulk Actions */}
       {showBulkActions && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <span className="text-sm font-medium text-blue-900">
+              <span className="text-sm font-medium text-primary">
                 {selectedContacts.size} contact{selectedContacts.size !== 1 ? 's' : ''} selected
               </span>
               <button
@@ -196,7 +196,7 @@ export function ContactManager() {
                   setSelectedContacts(new Set());
                   setShowBulkActions(false);
                 }}
-                className="text-sm text-blue-600 hover:text-blue-800"
+                className="text-sm text-primary hover:text-primary/80"
               >
                 Clear selection
               </button>

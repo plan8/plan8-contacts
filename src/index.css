@@ -30,6 +30,7 @@ body {
     "Noto Color Emoji";
   color: var(--color-dark);
   background: var(--color-light);
+  overflow-y: scroll;
 }
 
 /* only use this to update the style of the auth input fields. use a different class for all other input fields */

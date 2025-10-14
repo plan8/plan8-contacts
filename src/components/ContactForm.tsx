@@ -119,10 +119,10 @@ export function ContactForm({ contact, onSubmit, onClose }: ContactFormProps) {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
             />
             {showSuggestion && suggestedCompany && (
-              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <div className="mt-2 p-3 bg-primary/10 border border-primary/20 rounded-md">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <span className="text-sm text-blue-800">
+                    <span className="text-sm text-primary">
                       💡 Suggested company: <strong>{suggestedCompany}</strong>
                     </span>
                   </div>
@@ -130,7 +130,7 @@ export function ContactForm({ contact, onSubmit, onClose }: ContactFormProps) {
                     <button
                       type="button"
                       onClick={acceptSuggestion}
-                      className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      className="text-xs px-2 py-1 bg-primary text-white rounded hover:bg-primary-hover"
                     >
                       Use
                     </button>

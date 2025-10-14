@@ -119,7 +119,7 @@ export function ContactList({
                     {contact.tags?.map((tag: string, index: number) => (
                       <span
                         key={index}
-                        className="inline-flex px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800"
+                        className="inline-flex px-2 py-1 text-xs font-medium rounded bg-primary/10 text-primary"
                       >
                         {tag}
                       </span>

@@ -240,10 +240,10 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
 
       {/* Bulk Actions */}
       {showBulkActions && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <span className="text-sm font-medium text-blue-900">
+              <span className="text-sm font-medium text-primary">
                 {selectedInvitations.size} invitation{selectedInvitations.size !== 1 ? 's' : ''} selected
               </span>
               <button
@@ -251,7 +251,7 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
                   setSelectedInvitations(new Set());
                   setShowBulkActions(false);
                 }}
-                className="text-sm text-blue-600 hover:text-blue-800"
+                className="text-sm text-primary hover:text-primary/80"
               >
                 Clear selection
               </button>
@@ -277,7 +277,7 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
               </button>
               <button
                 onClick={() => handleBulkStatusUpdate("sent")}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors text-sm"
               >
                 Mark as Sent
               </button>
