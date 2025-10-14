@@ -207,7 +207,7 @@ export const importFromCsv = mutation({
   args: {
     contacts: v.array(v.object({
       firstName: v.string(),
-      lastName: v.string(),
+      lastName: v.optional(v.string()),
       email: v.optional(v.string()),
       company: v.optional(v.string()),
     })),
