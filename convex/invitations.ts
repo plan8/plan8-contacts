@@ -48,13 +48,15 @@ export const getByParty = query({
       invitations = invitations.filter(invitation => invitation.status === args.status);
     }
 
-    // Get contact details for each invitation
-    const invitationsWithContacts = await Promise.all(
+    // Get contact details and invitedBy user details for each invitation
+    const invitationsWithDetails = await Promise.all(
       invitations.map(async (invitation) => {
         const contact = await ctx.db.get(invitation.contactId);
+        const invitedBy = await ctx.db.get(invitation.invitedBy);
         return {
           ...invitation,
           contact,
+          invitedBy,
         };
       })
     );
@@ -62,7 +64,7 @@ export const getByParty = query({
     // Filter by search term if provided
     if (args.search) {
       const searchTerm = args.search.toLowerCase();
-      return invitationsWithContacts.filter(invitation => {
+      return invitationsWithDetails.filter(invitation => {
         if (!invitation.contact) return false;
         
         const fullName = `${invitation.contact.firstName} ${invitation.contact.lastName}`.toLowerCase();
@@ -75,7 +77,7 @@ export const getByParty = query({
       });
     }
 
-    return invitationsWithContacts;
+    return invitationsWithDetails;
   },
 });
 
