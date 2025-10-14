@@ -293,3 +293,28 @@ export const publicAttend = mutation({
     }
   },
 });
+
+export const undoCheckIn = mutation({
+  args: { id: v.id("invitations") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const invitation = await ctx.db.get(args.id);
+    if (!invitation) throw new Error("Invitation not found");
+
+    // Only allow undoing if current status is "attended"
+    if (invitation.status !== "attended") {
+      throw new Error("Can only undo check-in for attended invitations");
+    }
+
+    // Reset to "accepted" status (assuming they had accepted before checking in)
+    // You could also reset to "sent" or another status based on your business logic
+    await ctx.db.patch(args.id, {
+      status: "accepted",
+      respondedAt: undefined, // Clear the responded timestamp
+    });
+
+    return { success: true, message: "Check-in undone successfully" };
+  },
+});

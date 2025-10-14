@@ -21,6 +21,7 @@ export function DoormanView({ partyId, onBack }: DoormanViewProps) {
   const invitations = useQuery(api.invitations.getByParty, { partyId: partyId as any });
   const updateInvitationStatus = useMutation(api.invitations.updateStatus);
   const publicAttend = useMutation(api.invitations.publicAttend);
+  const undoCheckIn = useMutation(api.invitations.undoCheckIn);
 
   // Filter invitations based on search term
   const filteredInvitations = invitations?.filter(invitation => {
@@ -55,6 +56,15 @@ export function DoormanView({ partyId, onBack }: DoormanViewProps) {
       toast.success("Checked in successfully!");
     } catch (error) {
       toast.error("Failed to check in");
+    }
+  };
+
+  const handleUndoCheckIn = async (invitationId: string) => {
+    try {
+      await undoCheckIn({ id: invitationId as any });
+      toast.success("Check-in undone!");
+    } catch (error) {
+      toast.error("Failed to undo check-in");
     }
   };
 
@@ -171,21 +181,21 @@ export function DoormanView({ partyId, onBack }: DoormanViewProps) {
             <div className="divide-y divide-gray-200">
               {filteredInvitations.map((invitation) => (
                 <div key={invitation._id} className="p-4 hover:bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <div>
-                          <div className="text-lg font-medium text-gray-900">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-lg font-medium text-gray-900 truncate">
                             {invitation.contact?.firstName} {invitation.contact?.lastName}
                           </div>
                           {invitation.contact?.email && (
-                            <div className="text-sm text-gray-500">{invitation.contact.email}</div>
+                            <div className="text-sm text-gray-500 truncate">{invitation.contact.email}</div>
                           )}
                           {invitation.contact?.company && (
-                            <div className="text-sm text-gray-500">{invitation.contact.company}</div>
+                            <div className="text-sm text-gray-500 truncate">{invitation.contact.company}</div>
                           )}
                         </div>
-                        <div className="ml-4">
+                        <div className="flex-shrink-0">
                           <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
                             invitation.status === "attended" 
                               ? "bg-emerald-100 text-emerald-800" 
@@ -200,18 +210,27 @@ export function DoormanView({ partyId, onBack }: DoormanViewProps) {
                         </div>
                       </div>
                     </div>
-                    <div className="ml-4">
+                    <div className="flex-shrink-0">
                       {invitation.status === "attended" ? (
-                        <div className="text-emerald-600 font-medium flex items-center gap-1">
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                          Checked In
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                          <div className="text-emerald-600 font-medium flex items-center gap-1 text-sm">
+                            <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            <span className="hidden sm:inline">Checked In</span>
+                            <span className="sm:hidden">✓</span>
+                          </div>
+                          <button
+                            onClick={() => handleUndoCheckIn(invitation._id)}
+                            className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm whitespace-nowrap"
+                          >
+                            Undo
+                          </button>
                         </div>
                       ) : (
                         <button
                           onClick={() => handleCheckIn(invitation._id)}
-                          className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+                          className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium whitespace-nowrap"
                         >
                           Check In
                         </button>
