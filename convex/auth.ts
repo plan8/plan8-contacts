@@ -5,7 +5,14 @@ import { query } from "./_generated/server";
 import Google from "@auth/core/providers/google";
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
-  providers: [Password, Anonymous, Google],
+  providers: [
+    Password, 
+    Anonymous, 
+    Google({
+      // Ensure Google is treated as a trusted provider for account linking
+      allowDangerousEmailAccountLinking: true
+    })
+  ],
 });
 
 export const loggedInUser = query({
