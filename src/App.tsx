@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useLocation,
 } from "react-router-dom";
 import { api } from "../convex/_generated/api";
 import { SignInForm } from "./SignInForm";
@@ -29,6 +30,7 @@ export default function App() {
 
 function Content() {
   const loggedInUser = useQuery(api.auth.loggedInUser);
+  const location = useLocation();
 
   if (loggedInUser === undefined) {
     return (
@@ -36,6 +38,21 @@ function Content() {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
+  }
+
+  // Handle redirect after successful authentication
+  if (loggedInUser) {
+    // Check for redirect URL in localStorage (set before OAuth)
+    const storedRedirect = localStorage.getItem('authRedirect');
+    if (storedRedirect) {
+      localStorage.removeItem('authRedirect');
+      window.location.href = storedRedirect;
+      return (
+        <div className="flex justify-center items-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      );
+    }
   }
 
   return (
@@ -87,7 +104,7 @@ function Content() {
                       </h1>
                      
                     </div>
-                    <SignInForm />
+                    <SignInForm redirectTo={location.pathname} />
                   </div>
                 </div>
               </div>

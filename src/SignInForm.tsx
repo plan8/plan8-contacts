@@ -1,15 +1,48 @@
 "use client";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
- 
+interface SignInFormProps {
+  redirectTo?: string;
+}
 
-
-export function SignInForm() {
+export function SignInForm({ redirectTo }: SignInFormProps) {
   const { signIn } = useAuthActions();
-  const [flow, setFlow] = useState<"signIn" | "signUp">("signIn");
-  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
+
+  // Handle redirect after successful authentication
+  useEffect(() => {
+    // Check if we have a redirect URL in the URL params (from OAuth callback)
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectParam = urlParams.get('redirect');
+    
+    if (redirectParam) {
+      // Decode and navigate to the intended destination
+      const decodedRedirect = decodeURIComponent(redirectParam);
+      navigate(decodedRedirect, { replace: true });
+    } else if (redirectTo && redirectTo !== '/') {
+      // If we have a redirectTo prop and it's not the root, store it for after OAuth
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set('redirect', encodeURIComponent(redirectTo));
+      window.history.replaceState({}, '', currentUrl.toString());
+    }
+  }, [navigate, redirectTo]);
+
+  const handleGoogleSignIn = async () => {
+    try {
+      // Store the redirect URL in localStorage as a fallback
+      if (redirectTo && redirectTo !== '/') {
+        localStorage.setItem('authRedirect', redirectTo);
+      }
+      
+      await signIn("google");
+    } catch (error) {
+      console.error('Sign in error:', error);
+      toast.error("Failed to sign in with Google");
+    }
+  };
 
   return (
     <div className="w-full">
@@ -72,7 +105,7 @@ export function SignInForm() {
         <span className="mx-4 text-secondary">or</span>
         <hr className="my-4 grow border-gray-200" />
       </div> */}
-      <button type="button" className="auth-button" onClick={() => void signIn("google")}>Sign in with Google</button>
+      <button type="button" className="auth-button" onClick={() => void handleGoogleSignIn()}>Sign in with Google</button>
     </div>
   );
 }
