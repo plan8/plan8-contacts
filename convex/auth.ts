@@ -4,10 +4,29 @@ import { Anonymous } from "@convex-dev/auth/providers/Anonymous";
 import { query, MutationCtx } from "./_generated/server";
 import Google from "@auth/core/providers/google";
 
+// allowed domains
+const ALLOWED = ["plan8.se"];
+
+
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
-  providers: [Password, Anonymous, Google],
+  providers: [
+    Password,
+    Anonymous,
+    Google({
+      // optional hint to show org accounts first
+      authorization: { params: { prompt: "select_account", hd: ALLOWED[0] } }
+    })
+  ],
   callbacks: {
     async createOrUpdateUser(ctx: MutationCtx, args) {
+      // Domain restriction check
+      if (args.profile.email) {
+        const domain = String(args.profile.email).toLowerCase().split("@")[1];
+        if (!ALLOWED.includes(domain)) {
+          throw new Error("Access denied: Only plan8.se email addresses are allowed");
+        }
+      }
+
       // If there's an existing user ID, return it (account linking)
       if (args.existingUserId) {
         return args.existingUserId;
@@ -38,13 +57,12 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
 export const loggedInUser = query({
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      return null;
-    }
+    if (!userId) return null;
     const user = await ctx.db.get(userId);
-    if (!user) {
-      return null;
-    }
+    if (!user) return null;
+    // extra safety: enforce domain on reads too
+    const domain = String(user.email || "").toLowerCase().split("@")[1] || "";
+    if (!ALLOWED.includes(domain)) return null;
     return user;
   },
 });
