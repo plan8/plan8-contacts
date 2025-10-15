@@ -45,10 +45,22 @@ export const list = query({
     search: v.optional(v.string()),
     company: v.optional(v.string()),
     createdBy: v.optional(v.id("users")),
+    sortBy: v.optional(v.union(
+      v.literal("firstName"),
+      v.literal("lastName"), 
+      v.literal("email"),
+      v.literal("company"),
+      v.literal("createdTime")
+    )),
+    sortOrder: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+
+    // Default sorting
+    const sortBy = args.sortBy || "createdTime";
+    const sortOrder = args.sortOrder || "desc";
 
     if (args.search) {
       // First try regular search
@@ -107,7 +119,7 @@ export const list = query({
       return await ctx.db
         .query("contacts")
         .withIndex("by_company", (q) => q.eq("company", args.company))
-        .order("desc")
+        .order(sortOrder)
         .paginate(args.paginationOpts);
     }
 
@@ -115,13 +127,13 @@ export const list = query({
       return await ctx.db
         .query("contacts")
         .withIndex("by_created_by", (q) => q.eq("createdBy", args.createdBy!))
-        .order("desc")
+        .order(sortOrder)
         .paginate(args.paginationOpts);
     }
 
     return await ctx.db
       .query("contacts")
-      .order("desc")
+      .order(sortOrder)
       .paginate(args.paginationOpts);
   },
 });

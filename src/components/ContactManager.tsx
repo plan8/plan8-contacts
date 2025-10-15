@@ -19,6 +19,8 @@ export function ContactManager() {
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [showBulkPartyInvite, setShowBulkPartyInvite] = useState(false);
+  const [sortBy, setSortBy] = useState<"firstName" | "lastName" | "email" | "company" | "createdTime">("createdTime");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   const {
     results: contacts,
@@ -30,6 +32,8 @@ export function ContactManager() {
       search: searchTerm || undefined,
       company: selectedCompany || undefined,
       createdBy: selectedCreatedBy || undefined,
+      sortBy,
+      sortOrder,
     },
     { initialNumItems: 20 }
   );
@@ -130,7 +134,7 @@ export function ContactManager() {
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow-sm border">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Search
@@ -179,6 +183,51 @@ export function ContactManager() {
                 </option>
               ))}
             </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Sort By
+            </label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+            >
+              <option value="createdTime">Date Added</option>
+              <option value="firstName">First Name</option>
+              <option value="lastName">Last Name</option>
+              <option value="email">Email</option>
+              <option value="company">Company</option>
+            </select>
+          </div>
+        </div>
+        
+        {/* Sort Order */}
+        <div className="mt-4 flex items-center gap-4">
+          <label className="block text-sm font-medium text-gray-700">
+            Sort Order
+          </label>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setSortOrder("asc")}
+              className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                sortOrder === "asc"
+                  ? "bg-primary text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              Ascending
+            </button>
+            <button
+              onClick={() => setSortOrder("desc")}
+              className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                sortOrder === "desc"
+                  ? "bg-primary text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              Descending
+            </button>
           </div>
         </div>
       </div>

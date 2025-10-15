@@ -18,12 +18,16 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
+  const [sortBy, setSortBy] = useState<"firstName" | "lastName" | "email" | "company" | "status" | "createdTime">("createdTime");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   
   const partyData = useQuery(api.parties.getWithInvitations, { partyId: partyId as any });
   const filteredInvitations = useQuery(api.invitations.getByParty, { 
     partyId: partyId as any,
     search: searchTerm || undefined,
     status: selectedStatus || undefined,
+    sortBy,
+    sortOrder,
   });
   const updateInvitationStatus = useMutation(api.invitations.updateStatus);
   const removeInvitation = useMutation(api.invitations.remove);
@@ -169,54 +173,58 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
       </div>
 
       {/* Party Info */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <div className="grid md:grid-cols-2 gap-6">
+      <div className="bg-white rounded-lg shadow-sm border p-4">
+        <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <h2 className="text-lg font-semibold mb-4">Party Details</h2>
+            <h2 className="text-lg font-semibold mb-3">Party Details</h2>
             {party.description && (
-              <div className="mb-3">
+              <div className="mb-2">
                 <span className="text-sm font-medium text-gray-700">Description:</span>
-                <p className="text-gray-600">{party.description}</p>
+                <p className="text-gray-600 text-sm">{party.description}</p>
               </div>
             )}
             {party.date && (
-              <div className="mb-3">
+              <div className="mb-2">
                 <span className="text-sm font-medium text-gray-700">Date & Time:</span>
-                <p className="text-gray-600">
+                <p className="text-gray-600 text-sm">
                   {new Date(party.date).toLocaleDateString()} at {new Date(party.date).toLocaleTimeString()}
                 </p>
               </div>
             )}
             {party.location && (
-              <div className="mb-3">
+              <div className="mb-2">
                 <span className="text-sm font-medium text-gray-700">Location:</span>
-                <p className="text-gray-600">{party.location}</p>
+                <p className="text-gray-600 text-sm">{party.location}</p>
               </div>
             )}
           </div>
           
           <div>
-            <h2 className="text-lg font-semibold mb-4">Invitation Summary</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <div className="text-2xl font-bold text-gray-900">{invitations.length}</div>
-                <div className="text-sm text-gray-600">Total Invited</div>
+            <h2 className="text-lg font-semibold mb-3">Summary</h2>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="text-center p-2 bg-gray-50 rounded">
+                <div className="text-lg font-bold text-gray-900">{invitations.length}</div>
+                <div className="text-xs text-gray-600">Total</div>
               </div>
-              <div className="text-center p-3 bg-emerald-50 rounded-lg">
-                <div className="text-2xl font-bold text-emerald-600">{statusCounts.attended || 0}</div>
-                <div className="text-sm text-gray-600">Attended</div>
+              <div className="text-center p-2 bg-emerald-50 rounded">
+                <div className="text-lg font-bold text-emerald-600">{statusCounts.attended || 0}</div>
+                <div className="text-xs text-gray-600">Attended</div>
               </div>
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{statusCounts.accepted || 0}</div>
-                <div className="text-sm text-gray-600">Accepted</div>
+              <div className="text-center p-2 bg-green-50 rounded">
+                <div className="text-lg font-bold text-green-600">{statusCounts.accepted || 0}</div>
+                <div className="text-xs text-gray-600">Accepted</div>
               </div>
-              <div className="text-center p-3 bg-red-50 rounded-lg">
-                <div className="text-2xl font-bold text-red-600">{statusCounts.declined || 0}</div>
-                <div className="text-sm text-gray-600">Declined</div>
+              <div className="text-center p-2 bg-red-50 rounded">
+                <div className="text-lg font-bold text-red-600">{statusCounts.declined || 0}</div>
+                <div className="text-xs text-gray-600">Declined</div>
               </div>
-              <div className="text-center p-3 bg-yellow-50 rounded-lg">
-                <div className="text-2xl font-bold text-yellow-600">{statusCounts.pending || 0}</div>
-                <div className="text-sm text-gray-600">Pending</div>
+              <div className="text-center p-2 bg-yellow-50 rounded">
+                <div className="text-lg font-bold text-yellow-600">{statusCounts.pending || 0}</div>
+                <div className="text-xs text-gray-600">Pending</div>
+              </div>
+              <div className="text-center p-2 bg-blue-50 rounded">
+                <div className="text-lg font-bold text-blue-600">{statusCounts.sent || 0}</div>
+                <div className="text-xs text-gray-600">Sent</div>
               </div>
             </div>
           </div>
@@ -377,6 +385,23 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
                 <option value="attended">Attended</option>
               </select>
             </div>
+            <div className="sm:w-48">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Sort By
+              </label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+              >
+                <option value="createdTime">Date Invited</option>
+                <option value="firstName">First Name</option>
+                <option value="lastName">Last Name</option>
+                <option value="email">Email</option>
+                <option value="company">Company</option>
+                <option value="status">Status</option>
+              </select>
+            </div>
             <div className="flex items-end">
               <button
                 onClick={() => {
@@ -386,6 +411,35 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
                 className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               >
                 Clear Filters
+              </button>
+            </div>
+          </div>
+          
+          {/* Sort Order */}
+          <div className="mt-4 flex items-center gap-4">
+            <label className="block text-sm font-medium text-gray-700">
+              Sort Order
+            </label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSortOrder("asc")}
+                className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                  sortOrder === "asc"
+                    ? "bg-primary text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                Ascending
+              </button>
+              <button
+                onClick={() => setSortOrder("desc")}
+                className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                  sortOrder === "desc"
+                    ? "bg-primary text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                Descending
               </button>
             </div>
           </div>

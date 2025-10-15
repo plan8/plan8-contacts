@@ -33,10 +33,23 @@ export const getByParty = query({
     partyId: v.id("parties"),
     status: v.optional(v.string()),
     search: v.optional(v.string()),
+    sortBy: v.optional(v.union(
+      v.literal("firstName"),
+      v.literal("lastName"), 
+      v.literal("email"),
+      v.literal("company"),
+      v.literal("status"),
+      v.literal("createdTime")
+    )),
+    sortOrder: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+
+    // Default sorting
+    const sortBy = args.sortBy || "createdTime";
+    const sortOrder = args.sortOrder || "desc";
 
     let invitations = await ctx.db
       .query("invitations")
@@ -62,9 +75,10 @@ export const getByParty = query({
     );
 
     // Filter by search term if provided
+    let filteredInvitations = invitationsWithDetails;
     if (args.search) {
       const searchTerm = args.search.toLowerCase();
-      return invitationsWithDetails.filter(invitation => {
+      filteredInvitations = invitationsWithDetails.filter(invitation => {
         if (!invitation.contact) return false;
         
         const fullName = `${invitation.contact.firstName} ${invitation.contact.lastName}`.toLowerCase();
@@ -77,7 +91,45 @@ export const getByParty = query({
       });
     }
 
-    return invitationsWithDetails;
+    // Sort the results
+    filteredInvitations.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortBy) {
+        case "firstName":
+          aValue = a.contact?.firstName || "";
+          bValue = b.contact?.firstName || "";
+          break;
+        case "lastName":
+          aValue = a.contact?.lastName || "";
+          bValue = b.contact?.lastName || "";
+          break;
+        case "email":
+          aValue = a.contact?.email || "";
+          bValue = b.contact?.email || "";
+          break;
+        case "company":
+          aValue = a.contact?.company || "";
+          bValue = b.contact?.company || "";
+          break;
+        case "status":
+          aValue = a.status;
+          bValue = b.status;
+          break;
+        case "createdTime":
+        default:
+          aValue = a._creationTime;
+          bValue = b._creationTime;
+          break;
+      }
+
+      if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    return filteredInvitations;
   },
 });
 
