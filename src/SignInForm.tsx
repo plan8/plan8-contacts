@@ -3,6 +3,9 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+ 
+
+
 export function SignInForm() {
   const { signIn } = useAuthActions();
   const [flow, setFlow] = useState<"signIn" | "signUp">("signIn");
@@ -64,14 +67,12 @@ export function SignInForm() {
           </button>
         </div>
       </form>
-      {/* <div className="flex items-center justify-center my-3">
+      <div className="flex items-center justify-center my-3">
         <hr className="my-4 grow border-gray-200" />
         <span className="mx-4 text-secondary">or</span>
         <hr className="my-4 grow border-gray-200" />
       </div>
-      <button className="auth-button" onClick={() => void signIn("anonymous")}>
-        Sign in anonymously
-      </button> */}
+      <button type="button" className="auth-button" onClick={() => void signIn("google")}>Sign in with Google</button>
     </div>
   );
 }

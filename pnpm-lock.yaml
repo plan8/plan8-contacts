@@ -8,9 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@auth/core':
+        specifier: ^0.41.0
+        version: 0.41.0
       '@convex-dev/auth':
         specifier: ^0.0.80
-        version: 0.0.80(@auth/core@0.37.4)(convex@1.27.5(react@19.2.0))(react@19.2.0)
+        version: 0.0.80(@auth/core@0.41.0)(convex@1.27.5(react@19.2.0))(react@19.2.0)
       '@types/qrcode':
         specifier: ^1.5.5
         version: 1.5.5
@@ -23,6 +26,9 @@ importers:
       convex:
         specifier: ^1.24.2
         version: 1.27.5(react@19.2.0)
+      google:
+        specifier: link:@auth/core/providers/google
+        version: link:@auth/core/providers/google
       qrcode:
         specifier: ^1.5.4
         version: 1.5.4
@@ -106,8 +112,8 @@ packages:
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
 
-  '@auth/core@0.37.4':
-    resolution: {integrity: sha512-HOXJwXWXQRhbBDHlMU0K/6FT1v+wjtzdKhsNg0ZN7/gne6XPsIrjZ4daMcFnbq0Z/vsAbYBinQhhua0d77v7qw==}
+  '@auth/core@0.41.0':
+    resolution: {integrity: sha512-Wd7mHPQ/8zy6Qj7f4T46vg3aoor8fskJm6g2Zyj064oQ3+p0xNZXAV60ww0hY+MbTesfu29kK14Zk5d5JTazXQ==}
     peerDependencies:
       '@simplewebauthn/browser': ^9.0.1
       '@simplewebauthn/server': ^9.0.2
@@ -1714,6 +1720,9 @@ packages:
   jose@5.10.0:
     resolution: {integrity: sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg==}
 
+  jose@6.1.0:
+    resolution: {integrity: sha512-TTQJyoEoKcC1lscpVDCSsVgYzUDg/0Bt3WE//WiTPK6uOCQC2KZS4MpugbMWt/zyjkopgZoXhZuCi00gLudfUA==}
+
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
@@ -2501,10 +2510,10 @@ snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
 
-  '@auth/core@0.37.4':
+  '@auth/core@0.41.0':
     dependencies:
       '@panva/hkdf': 1.2.1
-      jose: 5.10.0
+      jose: 6.1.0
       oauth4webapi: 3.8.2
       preact: 10.24.3
       preact-render-to-string: 6.5.11(preact@10.24.3)
@@ -2621,9 +2630,9 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.27.1
 
-  '@convex-dev/auth@0.0.80(@auth/core@0.37.4)(convex@1.27.5(react@19.2.0))(react@19.2.0)':
+  '@convex-dev/auth@0.0.80(@auth/core@0.41.0)(convex@1.27.5(react@19.2.0))(react@19.2.0)':
     dependencies:
-      '@auth/core': 0.37.4
+      '@auth/core': 0.41.0
       arctic: 1.9.2
       convex: 1.27.5(react@19.2.0)
       cookie: 1.0.2
@@ -4062,6 +4071,8 @@ snapshots:
   jiti@1.21.7: {}
 
   jose@5.10.0: {}
+
+  jose@6.1.0: {}
 
   js-tokens@4.0.0: {}
 
