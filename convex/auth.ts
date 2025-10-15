@@ -5,19 +5,7 @@ import { query } from "./_generated/server";
 import Google from "@auth/core/providers/google";
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
-  providers: [
-    Password, 
-    Anonymous,
-    // @ts-expect-error - Custom Google provider with domain restriction
-    {
-      ...Google,
-      authorization: {
-        params: {
-          hd: "plan8.se" // Restrict to plan8.se domain
-        }
-      }
-    }
-  ],
+  providers: [Password, Anonymous, Google],
 });
 
 export const loggedInUser = query({
@@ -33,3 +21,5 @@ export const loggedInUser = query({
     return user;
   },
 });
+
+
