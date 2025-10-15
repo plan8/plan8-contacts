@@ -13,7 +13,7 @@ export function SignInForm() {
 
   return (
     <div className="w-full">
-      <form
+      {/* <form
         className="flex flex-col gap-form-field gap-2"
         onSubmit={(e) => {
           e.preventDefault();
@@ -71,7 +71,7 @@ export function SignInForm() {
         <hr className="my-4 grow border-gray-200" />
         <span className="mx-4 text-secondary">or</span>
         <hr className="my-4 grow border-gray-200" />
-      </div>
+      </div> */}
       <button type="button" className="auth-button" onClick={() => void signIn("google")}>Sign in with Google</button>
     </div>
   );
