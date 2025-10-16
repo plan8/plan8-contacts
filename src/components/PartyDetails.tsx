@@ -20,6 +20,7 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
   const [selectedStatus, setSelectedStatus] = useState("");
   const [sortBy, setSortBy] = useState<"firstName" | "lastName" | "email" | "company" | "status" | "createdTime">("createdTime");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [showQRModal, setShowQRModal] = useState(false);
   
   const partyData = useQuery(api.parties.getWithInvitations, { partyId: partyId as any });
   const filteredInvitations = useQuery(api.invitations.getByParty, { 
@@ -248,7 +249,7 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
               />
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/parties/${partyId}/attendance`);
+                  void navigator.clipboard.writeText(`${window.location.origin}/parties/${partyId}/attendance`);
                   toast.success("Link copied to clipboard!");
                 }}
                 className="px-4 py-2 text-sm bg-primary text-white rounded hover:bg-primary-hover transition-colors whitespace-nowrap"
@@ -259,11 +260,17 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
             
             {/* QR Code Section */}
             <div className="flex justify-center sm:justify-start">
-              <QRCodeComponent 
-                text={`${window.location.origin}/parties/${partyId}/attendance`}
-                size={120}
-                className="border border-gray-200 rounded-lg p-2 bg-white"
-              />
+              <button
+                onClick={() => setShowQRModal(true)}
+                className="cursor-pointer hover:opacity-80 transition-opacity"
+                title="Click to view larger QR code"
+              >
+                <QRCodeComponent 
+                  text={`${window.location.origin}/parties/${partyId}/attendance`}
+                  size={120}
+                  className="border border-gray-200 rounded-lg p-2 bg-white"
+                />
+              </button>
             </div>
           </div>
         </div>
@@ -553,6 +560,58 @@ export function PartyDetails({ partyId, onBack }: PartyDetailsProps) {
           partyId={partyId}
           onClose={() => setShowInviteModal(false)}
         />
+      )}
+
+      {/* QR Code Modal */}
+      {showQRModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-semibold">QR Code for {party.name}</h3>
+              <button
+                onClick={() => setShowQRModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="text-center">
+              <div className="mb-4">
+                <QRCodeComponent 
+                  text={`${window.location.origin}/parties/${partyId}/attendance`}
+                  size={300}
+                  className="border border-gray-200 rounded-lg p-4 bg-white mx-auto"
+                />
+              </div>
+              
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-2">Attendance Link:</p>
+                <p className="text-xs text-gray-500 break-all">
+                  {`${window.location.origin}/parties/${partyId}/attendance`}
+                </p>
+              </div>
+              
+              <div className="flex gap-2 justify-center">
+                <button
+                  onClick={() => {
+                    void navigator.clipboard.writeText(`${window.location.origin}/parties/${partyId}/attendance`);
+                    toast.success("Link copied to clipboard!");
+                  }}
+                  className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-hover transition-colors text-sm"
+                >
+                  Copy Link
+                </button>
+                <button
+                  onClick={() => window.print()}
+                  className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm"
+                >
+                  Print QR Code
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
