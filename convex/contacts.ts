@@ -39,6 +39,42 @@ function guessCompanyFromEmail(email: string): string | undefined {
   return undefined;
 }
 
+// Helper function to sort contacts by field
+function sortContacts(contacts: any[], sortBy: string, sortOrder: string) {
+  return contacts.sort((a, b) => {
+    let aValue: any;
+    let bValue: any;
+
+    switch (sortBy) {
+      case "firstName":
+        aValue = a.firstName || "";
+        bValue = b.firstName || "";
+        break;
+      case "lastName":
+        aValue = a.lastName || "";
+        bValue = b.lastName || "";
+        break;
+      case "email":
+        aValue = a.email || "";
+        bValue = b.email || "";
+        break;
+      case "company":
+        aValue = a.company || "";
+        bValue = b.company || "";
+        break;
+      case "createdTime":
+      default:
+        aValue = a._creationTime;
+        bValue = b._creationTime;
+        break;
+    }
+
+    if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
+    return 0;
+  });
+}
+
 export const list = query({
   args: { 
     paginationOpts: paginationOptsValidator,
@@ -75,9 +111,13 @@ export const list = query({
         })
         .paginate(args.paginationOpts);
 
-      // If we have results, return them
+      // If we have results, sort them and return
       if (searchResults.page.length > 0) {
-        return searchResults;
+        const sortedResults = sortContacts(searchResults.page, sortBy, sortOrder);
+        return {
+          ...searchResults,
+          page: sortedResults
+        };
       }
 
       // If no results, try fuzzy domain search
@@ -101,14 +141,17 @@ export const list = query({
           return true;
         });
 
+        // Sort the results
+        const sortedMatches = sortContacts(filteredMatches, sortBy, sortOrder);
+
         // Simulate pagination for fuzzy results
         const startIndex = 0; // For simplicity, start from beginning
-        const endIndex = Math.min(args.paginationOpts.numItems, filteredMatches.length);
+        const endIndex = Math.min(args.paginationOpts.numItems, sortedMatches.length);
         
         return {
-          page: filteredMatches.slice(startIndex, endIndex),
-          isDone: endIndex >= filteredMatches.length,
-          continueCursor: endIndex < filteredMatches.length ? "more" : ""
+          page: sortedMatches.slice(startIndex, endIndex),
+          isDone: endIndex >= sortedMatches.length,
+          continueCursor: endIndex < sortedMatches.length ? "more" : ""
         };
       }
 
@@ -116,25 +159,56 @@ export const list = query({
     }
 
     if (args.company) {
-      return await ctx.db
+      const results = await ctx.db
         .query("contacts")
         .withIndex("by_company", (q) => q.eq("company", args.company))
-        .order(sortOrder)
-        .paginate(args.paginationOpts);
+        .collect();
+      
+      const sortedResults = sortContacts(results, sortBy, sortOrder);
+      
+      // Apply pagination manually
+      const startIndex = 0;
+      const endIndex = Math.min(args.paginationOpts.numItems, sortedResults.length);
+      
+      return {
+        page: sortedResults.slice(startIndex, endIndex),
+        isDone: endIndex >= sortedResults.length,
+        continueCursor: endIndex < sortedResults.length ? "more" : ""
+      };
     }
 
     if (args.createdBy) {
-      return await ctx.db
+      const results = await ctx.db
         .query("contacts")
         .withIndex("by_created_by", (q) => q.eq("createdBy", args.createdBy!))
-        .order(sortOrder)
-        .paginate(args.paginationOpts);
+        .collect();
+      
+      const sortedResults = sortContacts(results, sortBy, sortOrder);
+      
+      // Apply pagination manually
+      const startIndex = 0;
+      const endIndex = Math.min(args.paginationOpts.numItems, sortedResults.length);
+      
+      return {
+        page: sortedResults.slice(startIndex, endIndex),
+        isDone: endIndex >= sortedResults.length,
+        continueCursor: endIndex < sortedResults.length ? "more" : ""
+      };
     }
 
-    return await ctx.db
-      .query("contacts")
-      .order(sortOrder)
-      .paginate(args.paginationOpts);
+    // Default query - get all contacts and sort them
+    const allContacts = await ctx.db.query("contacts").collect();
+    const sortedContacts = sortContacts(allContacts, sortBy, sortOrder);
+    
+    // Apply pagination manually
+    const startIndex = 0;
+    const endIndex = Math.min(args.paginationOpts.numItems, sortedContacts.length);
+    
+    return {
+      page: sortedContacts.slice(startIndex, endIndex),
+      isDone: endIndex >= sortedContacts.length,
+      continueCursor: endIndex < sortedContacts.length ? "more" : ""
+    };
   },
 });
 
