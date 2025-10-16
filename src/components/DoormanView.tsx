@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
+import { QRCodeComponent } from "./QRCode";
 
 interface DoormanViewProps {
   partyId: string;
@@ -11,6 +12,7 @@ interface DoormanViewProps {
 export function DoormanView({ partyId, onBack }: DoormanViewProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
   const [quickAddForm, setQuickAddForm] = useState({
     firstName: "",
     lastName: "",
@@ -140,12 +142,20 @@ export function DoormanView({ partyId, onBack }: DoormanViewProps) {
                 autoFocus
               />
             </div>
-            <div className="flex items-end">
+            <div className="flex items-end gap-2">
+              <button
+                onClick={() => setShowQRModal(true)}
+                className="px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium flex items-center gap-2"
+                title="Show QR Code"
+              >
+             
+                QR
+              </button>
               <button
                 onClick={() => setShowQuickAdd(true)}
                 className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-medium"
               >
-                + Add
+                +
               </button>
             </div>
           </div>
@@ -219,7 +229,7 @@ export function DoormanView({ partyId, onBack }: DoormanViewProps) {
                             <span className="sm:hidden">✓</span>
                           </div>
                           <button
-                            onClick={() => handleUndoCheckIn(invitation._id)}
+                            onClick={() => void handleUndoCheckIn(invitation._id)}
                             className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm whitespace-nowrap"
                           >
                             Undo
@@ -227,7 +237,7 @@ export function DoormanView({ partyId, onBack }: DoormanViewProps) {
                         </div>
                       ) : (
                         <button
-                          onClick={() => handleCheckIn(invitation._id)}
+                          onClick={() => void handleCheckIn(invitation._id)}
                           className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium whitespace-nowrap"
                         >
                           Check In
@@ -276,7 +286,7 @@ export function DoormanView({ partyId, onBack }: DoormanViewProps) {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-4 w-full max-w-md mx-4">
               <h2 className="text-xl font-bold mb-4">Add New Attendee</h2>
-              <form onSubmit={handleQuickAdd} className="space-y-4">
+              <form onSubmit={(e) => void handleQuickAdd(e)} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     First Name *
@@ -330,6 +340,58 @@ export function DoormanView({ partyId, onBack }: DoormanViewProps) {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* QR Code Modal */}
+        {showQRModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold">QR Code for {party.name}</h3>
+                <button
+                  onClick={() => setShowQRModal(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="text-center">
+                <div className="mb-4">
+                  <QRCodeComponent 
+                    text={`${window.location.origin}/parties/${partyId}/attendance`}
+                    size={300}
+                    className="border border-gray-200 rounded-lg p-4 bg-white mx-auto"
+                  />
+                </div>
+                
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600 mb-2">Attendance Link:</p>
+                  <p className="text-xs text-gray-500 break-all">
+                    {`${window.location.origin}/parties/${partyId}/attendance`}
+                  </p>
+                </div>
+                
+                <div className="flex gap-2 justify-center">
+                  <button
+                    onClick={() => {
+                      void navigator.clipboard.writeText(`${window.location.origin}/parties/${partyId}/attendance`);
+                      toast.success("Link copied to clipboard!");
+                    }}
+                    className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-hover transition-colors text-sm"
+                  >
+                    Copy Link
+                  </button>
+                  <button
+                    onClick={() => window.print()}
+                    className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm"
+                  >
+                    Print QR Code
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
