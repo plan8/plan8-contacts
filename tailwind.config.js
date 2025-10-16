@@ -5,8 +5,8 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: "#10b981", // Emerald green
-          hover: "#059669",
+          DEFAULT: "hsla(240, 18%, 48%, 1)", // Emerald green
+          hover: "hsla(240, 18%, 28%, 1)",
         },
         secondary: "#64748b",
       },
