@@ -101,7 +101,7 @@ export function DoormanView({ partyId, onBack }: DoormanViewProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b p-4">
+      {/* <div className="bg-white shadow-sm border-b p-4">
         <div className="mx-auto py-4">
           <div className="flex items-center justify-between">
             <div>
@@ -120,25 +120,23 @@ export function DoormanView({ partyId, onBack }: DoormanViewProps) {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
-      <div className="mx-auto py-6">
+      <div className="mx-auto py-2">
         {/* Statistics Section */}
        
 
         {/* Search Section */}
-        <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Search for attendee
-              </label>
+        <div className="p-1 mb-2">
+          <div className="flex flex-row gap-2 items-center w-full justify-between">
+            <div className="flex">
+              
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by name, email, or company..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-lg"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-lg"
                 autoFocus
               />
             </div>
@@ -147,7 +145,7 @@ export function DoormanView({ partyId, onBack }: DoormanViewProps) {
                 onClick={() => setShowQuickAdd(true)}
                 className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-medium"
               >
-                + Add New Person
+                + Add
               </button>
             </div>
           </div>
@@ -155,11 +153,11 @@ export function DoormanView({ partyId, onBack }: DoormanViewProps) {
 
         {/* Results */}
         <div className="bg-white rounded-lg shadow-sm border">
-          <div className="px-6 py-4 border-b">
+          {/* <div className="px-6 py-4 border-b">
             <h2 className="text-lg font-semibold">
               {searchTerm ? `Search Results (${filteredInvitations.length})` : "All Invitees"}
             </h2>
-          </div>
+          </div> */}
 
           {filteredInvitations.length === 0 ? (
             <div className="p-8 text-center">
