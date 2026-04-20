@@ -1,7 +1,8 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, type QueryCtx } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { paginationOptsValidator } from "convex/server";
+import type { Doc, Id } from "./_generated/dataModel";
 
 export const get = query({
   args: { id: v.id("contacts") },
@@ -13,6 +14,103 @@ export const get = query({
   },
 });
 
+/** Offset-based slice for list modes that sort in memory (cursor = next start index as string). */
+function paginateInMemory<T>(
+  sortedItems: T[],
+  paginationOpts: { numItems: number; cursor: string | null },
+): { page: T[]; isDone: boolean; continueCursor: string } {
+  let start = 0;
+  if (paginationOpts.cursor) {
+    const n = parseInt(paginationOpts.cursor, 10);
+    if (!Number.isNaN(n) && n >= 0) {
+      start = n;
+    }
+  }
+  const end = Math.min(start + paginationOpts.numItems, sortedItems.length);
+  return {
+    page: sortedItems.slice(start, end),
+    isDone: end >= sortedItems.length,
+    continueCursor: end < sortedItems.length ? String(end) : "",
+  };
+}
+
+/**
+ * Same filtering/sorting as the contact list (no pagination).
+ * Search branch matches list: text search first, then optional domain fuzzy fallback.
+ */
+async function getSortedContactsForFilters(
+  ctx: QueryCtx,
+  args: {
+    search?: string;
+    company?: string;
+    createdBy?: Id<"users">;
+    sortBy: string;
+    sortOrder: string;
+  },
+): Promise<Doc<"contacts">[]> {
+  if (args.search) {
+    const fromSearch = await ctx.db
+      .query("contacts")
+      .withSearchIndex("search_contacts", (q) => {
+        let searchQuery = q.search("firstName", args.search!);
+        if (args.company) {
+          searchQuery = searchQuery.eq("company", args.company);
+        }
+        return searchQuery;
+      })
+      .collect();
+
+    if (fromSearch.length > 0) {
+      return sortContacts([...fromSearch], args.sortBy, args.sortOrder);
+    }
+
+    const searchTerm = args.search.toLowerCase();
+    if (searchTerm.length >= 2) {
+      const allContacts = await ctx.db.query("contacts").collect();
+      const fuzzyMatches = allContacts.filter((contact) => {
+        if (!contact.email) return false;
+        const domain = contact.email.split("@")[1]?.toLowerCase() || "";
+        const domainParts = domain.split(".");
+
+        return (
+          domainParts.some(
+            (part) => part.includes(searchTerm) || searchTerm.includes(part),
+          ) || domain.includes(searchTerm)
+        );
+      });
+
+      const filteredMatches = fuzzyMatches.filter((contact) => {
+        if (args.company && contact.company !== args.company) return false;
+        return true;
+      });
+
+      return sortContacts([...filteredMatches], args.sortBy, args.sortOrder);
+    }
+
+    return [];
+  }
+
+  if (args.company) {
+    const results = await ctx.db
+      .query("contacts")
+      .withIndex("by_company", (q) => q.eq("company", args.company))
+      .collect();
+    return sortContacts([...results], args.sortBy, args.sortOrder);
+  }
+
+  if (args.createdBy) {
+    const results = await ctx.db
+      .query("contacts")
+      .withIndex("by_created_by", (q) => q.eq("createdBy", args.createdBy))
+      .collect();
+    return sortContacts([...results], args.sortBy, args.sortOrder);
+  }
+
+  const allContacts = await ctx.db.query("contacts").collect();
+  return sortContacts([...allContacts], args.sortBy, args.sortOrder);
+}
+
+/** Full-database export (ignores list filters). Rows sorted by last name, then first name. */
 export const listForExport = query({
   args: {},
   returns: v.array(
@@ -29,8 +127,10 @@ export const listForExport = query({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    const contacts = await ctx.db.query("contacts").collect();
-    const rows = contacts.map((c) => ({
+    const allContacts = await ctx.db.query("contacts").collect();
+    const sorted = sortContacts([...allContacts], "lastName", "asc");
+
+    return sorted.map((c) => ({
       firstName: c.firstName,
       lastName: c.lastName,
       email: c.email ?? "",
@@ -38,7 +138,6 @@ export const listForExport = query({
       tags: c.tags ?? [],
       notes: c.notes ?? "",
     }));
-    return sortContacts(rows, "lastName", "asc");
   },
 });
 
@@ -105,139 +204,38 @@ function sortContacts(contacts: any[], sortBy: string, sortOrder: string) {
 }
 
 export const list = query({
-  args: { 
+  args: {
     paginationOpts: paginationOptsValidator,
     search: v.optional(v.string()),
     company: v.optional(v.string()),
     createdBy: v.optional(v.id("users")),
-    sortBy: v.optional(v.union(
-      v.literal("firstName"),
-      v.literal("lastName"), 
-      v.literal("email"),
-      v.literal("company"),
-      v.literal("createdTime")
-    )),
+    sortBy: v.optional(
+      v.union(
+        v.literal("firstName"),
+        v.literal("lastName"),
+        v.literal("email"),
+        v.literal("company"),
+        v.literal("createdTime"),
+      ),
+    ),
     sortOrder: v.optional(v.union(v.literal("asc"), v.literal("desc"))),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
-    // Default sorting
     const sortBy = args.sortBy || "createdTime";
     const sortOrder = args.sortOrder || "desc";
 
-    if (args.search) {
-      // First try regular search
-      const searchResults = await ctx.db
-        .query("contacts")
-        .withSearchIndex("search_contacts", (q) => {
-          let searchQuery = q.search("firstName", args.search!);
-          if (args.company) {
-            searchQuery = searchQuery.eq("company", args.company);
-          }
-          return searchQuery;
-        })
-        .paginate(args.paginationOpts);
+    const sorted = await getSortedContactsForFilters(ctx, {
+      search: args.search,
+      company: args.company,
+      createdBy: args.createdBy,
+      sortBy,
+      sortOrder,
+    });
 
-      // If we have results, sort them and return
-      if (searchResults.page.length > 0) {
-        const sortedResults = sortContacts(searchResults.page, sortBy, sortOrder);
-        return {
-          ...searchResults,
-          page: sortedResults
-        };
-      }
-
-      // If no results, try fuzzy domain search
-      const searchTerm = args.search.toLowerCase();
-      if (searchTerm.length >= 2) {
-        const allContacts = await ctx.db.query("contacts").collect();
-        const fuzzyMatches = allContacts.filter(contact => {
-          if (!contact.email) return false;
-          const domain = contact.email.split('@')[1]?.toLowerCase() || '';
-          const domainParts = domain.split('.');
-          
-          // Check if search term is contained in any part of the domain
-          return domainParts.some(part => 
-            part.includes(searchTerm) || searchTerm.includes(part)
-          ) || domain.includes(searchTerm);
-        });
-
-        // Apply additional filters
-        const filteredMatches = fuzzyMatches.filter(contact => {
-          if (args.company && contact.company !== args.company) return false;
-          return true;
-        });
-
-        // Sort the results
-        const sortedMatches = sortContacts(filteredMatches, sortBy, sortOrder);
-
-        // Simulate pagination for fuzzy results
-        const startIndex = 0; // For simplicity, start from beginning
-        const endIndex = Math.min(args.paginationOpts.numItems, sortedMatches.length);
-        
-        return {
-          page: sortedMatches.slice(startIndex, endIndex),
-          isDone: endIndex >= sortedMatches.length,
-          continueCursor: endIndex < sortedMatches.length ? "more" : ""
-        };
-      }
-
-      return searchResults;
-    }
-
-    if (args.company) {
-      const results = await ctx.db
-        .query("contacts")
-        .withIndex("by_company", (q) => q.eq("company", args.company))
-        .collect();
-      
-      const sortedResults = sortContacts(results, sortBy, sortOrder);
-      
-      // Apply pagination manually
-      const startIndex = 0;
-      const endIndex = Math.min(args.paginationOpts.numItems, sortedResults.length);
-      
-      return {
-        page: sortedResults.slice(startIndex, endIndex),
-        isDone: endIndex >= sortedResults.length,
-        continueCursor: endIndex < sortedResults.length ? "more" : ""
-      };
-    }
-
-    if (args.createdBy) {
-      const results = await ctx.db
-        .query("contacts")
-        .withIndex("by_created_by", (q) => q.eq("createdBy", args.createdBy!))
-        .collect();
-      
-      const sortedResults = sortContacts(results, sortBy, sortOrder);
-      
-      // Apply pagination manually
-      const startIndex = 0;
-      const endIndex = Math.min(args.paginationOpts.numItems, sortedResults.length);
-      
-      return {
-        page: sortedResults.slice(startIndex, endIndex),
-        isDone: endIndex >= sortedResults.length,
-        continueCursor: endIndex < sortedResults.length ? "more" : ""
-      };
-    }
-
-    // Default query - get all contacts and sort them
-    const allContacts = await ctx.db.query("contacts").collect();
-    const sortedContacts = sortContacts(allContacts, sortBy, sortOrder);
-    
-    // Apply pagination manually
-    const startIndex = 0;
-    const endIndex = Math.min(args.paginationOpts.numItems, sortedContacts.length);
-    
-    return {
-      page: sortedContacts.slice(startIndex, endIndex),
-      isDone: endIndex >= sortedContacts.length,
-      continueCursor: endIndex < sortedContacts.length ? "more" : ""
-    };
+    return paginateInMemory(sorted, args.paginationOpts);
   },
 });
 

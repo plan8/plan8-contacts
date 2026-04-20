@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useConvex, useMutation, useQuery, usePaginatedQuery } from "convex/react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 import { toast } from "sonner";
 import { ContactForm } from "./ContactForm";
 import { ContactList } from "./ContactList";
@@ -67,7 +68,9 @@ export function ContactManager() {
     {
       search: searchTerm || undefined,
       company: selectedCompany || undefined,
-      createdBy: selectedCreatedBy || undefined,
+      createdBy: selectedCreatedBy
+        ? (selectedCreatedBy as Id<"users">)
+        : undefined,
       sortBy,
       sortOrder,
     },
@@ -160,7 +163,9 @@ export function ContactManager() {
       a.download = `contacts-export-${date}.csv`;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success(`Exported ${rows.length} contact${rows.length === 1 ? "" : "s"}`);
+      toast.success(
+        `Exported ${rows.length} contact${rows.length === 1 ? "" : "s"}`,
+      );
     } catch {
       toast.error("Failed to export contacts");
     } finally {
