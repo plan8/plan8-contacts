@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQuery, usePaginatedQuery } from "convex/react";
+import { useConvex, useMutation, useQuery, usePaginatedQuery } from "convex/react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
@@ -8,8 +8,43 @@ import { ContactList } from "./ContactList";
 import { CsvImport } from "./CsvImport";
 import { BulkPartyInvite } from "./BulkPartyInvite";
 
+function escapeCsvField(value: string): string {
+  if (/[",\n\r]/.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+function buildContactsCsv(
+  rows: Array<{
+    firstName: string;
+    lastName: string;
+    email: string;
+    company: string;
+    tags: string[];
+    notes: string;
+  }>,
+): string {
+  const header = ["First Name", "Last Name", "Email", "Company", "Tags", "Notes"];
+  const lines = [
+    header.map(escapeCsvField).join(","),
+    ...rows.map((r) =>
+      [
+        escapeCsvField(r.firstName),
+        escapeCsvField(r.lastName),
+        escapeCsvField(r.email),
+        escapeCsvField(r.company),
+        escapeCsvField(r.tags.join("; ")),
+        escapeCsvField(r.notes),
+      ].join(","),
+    ),
+  ];
+  return lines.join("\n");
+}
+
 export function ContactManager() {
   const navigate = useNavigate();
+  const convex = useConvex();
   const [showForm, setShowForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [editingContact, setEditingContact] = useState<any>(null);
@@ -21,6 +56,7 @@ export function ContactManager() {
   const [showBulkPartyInvite, setShowBulkPartyInvite] = useState(false);
   const [sortBy, setSortBy] = useState<"firstName" | "lastName" | "email" | "company" | "createdTime">("createdTime");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [isExporting, setIsExporting] = useState(false);
 
   const {
     results: contacts,
@@ -111,12 +147,41 @@ export function ContactManager() {
     }
   };
 
+  const handleExportData = async () => {
+    setIsExporting(true);
+    try {
+      const rows = await convex.query(api.contacts.listForExport, {});
+      const csv = buildContactsCsv(rows);
+      const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const date = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `contacts-export-${date}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${rows.length} contact${rows.length === 1 ? "" : "s"}`);
+    } catch {
+      toast.error("Failed to export contacts");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
         <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => void handleExportData()}
+            disabled={isExporting}
+            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+          >
+            {isExporting ? "Exporting…" : "Export Data"}
+          </button>
           <button
             onClick={() => setShowImport(true)}
             className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"

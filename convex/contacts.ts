@@ -13,6 +13,35 @@ export const get = query({
   },
 });
 
+export const listForExport = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      firstName: v.string(),
+      lastName: v.string(),
+      email: v.string(),
+      company: v.string(),
+      tags: v.array(v.string()),
+      notes: v.string(),
+    }),
+  ),
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const contacts = await ctx.db.query("contacts").collect();
+    const rows = contacts.map((c) => ({
+      firstName: c.firstName,
+      lastName: c.lastName,
+      email: c.email ?? "",
+      company: c.company ?? "",
+      tags: c.tags ?? [],
+      notes: c.notes ?? "",
+    }));
+    return sortContacts(rows, "lastName", "asc");
+  },
+});
+
 // Helper function to extract company from email domain
 function guessCompanyFromEmail(email: string): string | undefined {
   if (!email || !email.includes('@')) return undefined;
